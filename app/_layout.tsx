@@ -1,28 +1,20 @@
 import { Stack } from "expo-router";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import "../src/global.css";
 
-export default function RootLayout() {
+export default function Layout() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <Stack
-          screenOptions={{
-            headerStyle: {
-              backgroundColor: "#2a9cffff", // header background color
-            },
-            headerTintColor: "#fff", // back button & title color
-            headerTitleStyle: {
-              fontWeight: "bold",
-              fontSize: 20,
-            },
-            headerTitleAlign: "center", // center the title
-            contentStyle: {
-              backgroundColor: "#f5f5f5", // page background
-            },
-          }}
-        />
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+    <Stack
+      initialRouteName="index"
+      screenOptions={{
+        headerStyle: { backgroundColor: "#2a9cffff" },
+        headerTintColor: "#fff",
+        headerTitleStyle: { fontWeight: "bold", fontSize: 20 },
+        headerTitleAlign: "center",
+        contentStyle: { backgroundColor: "#f5f5f5" },
+      }}
+    >
+      {/* Only declare screens that actually exist as files */}
+      <Stack.Screen name="index" options={{ title: "Login" }} />
+    </Stack>
   );
 }
