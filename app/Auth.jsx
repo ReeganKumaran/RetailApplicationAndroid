@@ -1,11 +1,13 @@
-import { View, Text } from 'react-native'
-import React from 'react'
+import { SafeAreaView } from "react-native";
+import Login from "./Login";
+import SignIn from "./SignIn";
+import { useState } from "react";
 
 export default function Auth() {
+  const [toggle, setToggle] = useState(false);
   return (
-    <View>
-        
-      {/* <Text>Auth</Text> */}
-    </View>
-  )
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+      {toggle ? <SignIn /> : <Login />}
+    </SafeAreaView>
+  );
 }

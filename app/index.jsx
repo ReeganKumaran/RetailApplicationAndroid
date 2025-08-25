@@ -1,24 +1,15 @@
-import { Text, Touchable, TouchableOpacity, View } from "react-native";
-import React, { Component } from "react";
+import { Text, TouchableOpacity, View } from "react-native";
 import { router } from "expo-router";
 
-export default class index extends Component {
-  render() {
-    return (
-      <View style={{ flex: 1, justifyContent:"flex-end" }}>
-        <TouchableOpacity onPress={()=>router.push("./Login")}   style={{
-          height: 48,
-          paddingHorizontal: 24,
-          borderRadius: 10,
-          marginBottom:50,
-          backgroundColor: "green",
-          justifyContent: "center",
-          alignItems: "center",
-          alignSelf: "stretch", // full-width; remove if you want compact
-        }}>
-          <Text style={{color:"white"}}>Login</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
+export default function Index() {
+  return (
+    <View className="flex-1 justify-end p-5">
+      <TouchableOpacity
+        onPress={() => router.push("./Auth")}
+        className="h-12 px-6 rounded-xl mb-12 bg-black items-center justify-center self-stretch"
+      >
+        <Text className="text-white text-base font-semibold">Login</Text>
+      </TouchableOpacity>
+    </View>
+  );
 }

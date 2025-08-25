@@ -5,7 +5,7 @@ export default function Layout() {
     <Stack
       initialRouteName="index"
       screenOptions={{
-        headerStyle: { backgroundColor: "#2a9cffff" },
+        headerStyle: { backgroundColor: "#000000ff" },
         headerTintColor: "#fff",
         headerTitleStyle: { fontWeight: "bold", fontSize: 20 },
         headerTitleAlign: "center",
@@ -13,7 +13,8 @@ export default function Layout() {
       }}
     >
       {/* Only declare screens that actually exist as files */}
-      <Stack.Screen name="index" options={{ title: "Login" }} />
+      <Stack.Screen name="index" options={{ title: "Home" }} />
+      <Stack.Screen name="Login" options={{ title: "Login" }} />
     </Stack>
   );
 }
