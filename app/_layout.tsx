@@ -1,14 +1,14 @@
-import { SplashScreen, Stack } from "expo-router";
+import { Stack } from "expo-router";
 import "../global.css"
-import { useEffect, useState } from "react";
+// import { useEffect, useState } from "react";
 export default function Layout() {
-    const [loading, setLoading] = useState(true);
-    useEffect(() => {
-      setTimeout(() => {
-        SplashScreen.hideAsync();
-        setLoading(false);
-      }, 2000); // 2 seconds
-    }, []);
+    // const [loading, setLoading] = useState(true);
+    // useEffect(() => {
+    //   setTimeout(() => {
+    //     SplashScreen.hideAsync();
+    //     setLoading(false);
+    //   }, 2000); // 2 seconds
+    // }, []);
   return (
     <Stack
       initialRouteName="index"
