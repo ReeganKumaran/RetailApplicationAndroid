@@ -6,15 +6,14 @@ import {
   TextInput,
   TouchableOpacity,
   Image,
-  View
+  View,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { getLogin } from "../src/API/APIEndpoint/Auth/auth";
 import { validateEmail, validatePassword } from "../src/helper/Validation";
-// import { Image } from "react-native-web";
-import logo from "../assets/images/Logo.png";
-export default function Login() {
+import { assets } from "../assets/asset";
+export default function Login({ setIsNewUser }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -43,24 +42,18 @@ export default function Login() {
           className="flex-1 "
           // behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
-          <SafeAreaView className="flex-1">
+          <SafeAreaView className="flex-1 ">
             <ScrollView
               contentContainerStyle={{ gap: 12, padding: 16 }}
               keyboardShouldPersistTaps="handled"
             >
               {/* <View className="flex w-full justify-center items-center"> */}
-              <View className="flex-1 justify-center items-center">
-                <Image
-                  source={logo}
-                  style={{ width: 120, height: 120 }}
-                  resizeMode="contain"
-                />
-              </View>
+
               {/* </View> */}
               {/* Email */}
               <Text className="font-semibold text-base">Enter your email:</Text>
               <TextInput
-                className="bg-[#eee] border-2 border-[#ccc] rounded-lg p-3 text-white"
+                className="bg-[#eee] border border-[#ccc] rounded-xl p-3 text-white"
                 placeholder="Enter email"
                 placeholderTextColor="#aaa"
                 onChangeText={setEmail}
@@ -74,22 +67,41 @@ export default function Login() {
                 Enter your Password:
               </Text>
               <TextInput
-                className="bg-[#eee] border-2 border-[#ccc] rounded-lg p-3 text-white"
+                className="bg-[#eee] border border-[#ccc] rounded-xl p-3 text-white"
                 placeholder="Enter password"
                 placeholderTextColor="#aaa"
                 onChangeText={setPassword}
                 value={password}
                 secureTextEntry
               />
+              {/* <View className=""> */}
+              <Text className="text-center">
+                {"Don't have an account? "}
+                <Text className="font-black" onPress={() => setIsNewUser(true)}>
+                  Sign Up
+                </Text>
+              </Text>
+              {/* </View> */}
+
+              {/* Error Message */}
+              {error ? <Text className="text-red-500">{error}</Text> : null}
 
               {/* Button */}
               <TouchableOpacity
                 onPress={handlePress}
                 className="mt-4 h-12 rounded-lg bg-black items-center justify-center active:opacity-80"
               >
-                <Text className="text-white font-semibold">Submit</Text>
+                <Text className="text-white font-semibold">Login</Text>
               </TouchableOpacity>
             </ScrollView>
+            <View className="flex-1 flex justify-center items-center">
+              {/* <assets.login height={250} /> */}
+              <Image
+                source={assets.logo}
+                style={{ height: 100 }}
+                resizeMode="contain"
+              />
+            </View>
           </SafeAreaView>
         </KeyboardAvoidingView>
       </SafeAreaProvider>

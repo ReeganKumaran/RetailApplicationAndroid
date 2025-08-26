@@ -1,7 +1,10 @@
 import { Text, TouchableOpacity, View } from "react-native";
 import { router } from "expo-router";
-
+// import * as SplashScreen from "expo-splash-screen";
+import { useEffect, useState } from "react";
+// SplashScreen.preventAutoHideAsync();
 export default function Index() {
+
   return (
     <View className="flex-1 justify-end p-5">
       <TouchableOpacity
