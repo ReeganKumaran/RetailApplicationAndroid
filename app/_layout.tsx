@@ -1,26 +1,33 @@
 import { Stack } from "expo-router";
-import "../global.css"
-// import { useEffect, useState } from "react";
+import { LinearGradient } from "expo-linear-gradient";
+import { StyleSheet } from "react-native";
+import "../global.css";
+
 export default function Layout() {
-    // const [loading, setLoading] = useState(true);
-    // useEffect(() => {
-    //   setTimeout(() => {
-    //     SplashScreen.hideAsync();
-    //     setLoading(false);
-    //   }, 2000); // 2 seconds
-    // }, []);
   return (
     <Stack
       initialRouteName="index"
       screenOptions={{
-        headerStyle: { backgroundColor: "#ffffffff" },
-        headerTintColor: "#000000ff",
+        headerShadowVisible: false,
+        headerTintColor: "#fff",
         headerTitleStyle: { fontWeight: "bold", fontSize: 20 },
         headerTitleAlign: "center",
-        contentStyle: { backgroundColor: "#ffffffff" },
+        contentStyle: { backgroundColor: "#fff" }, // page background
+
+        // let the gradient show through
+        headerStyle: { backgroundColor: "transparent" },
+        headerTransparent: true,
+        // 👇 add the gradient here
+        // headerBackground: () => (
+        //   <LinearGradient
+        //     colors={["#2e2d2dff",f "#000000"]} // use 6-digit hex (no alpha)
+        //     start={{ x: 0, y: 0 }}
+        //     end={{ x: 1, y: 1 }}
+        //     style={StyleSheet.absoluteFill} // fill the entire header area
+        //   />
+        // ),
       }}
     >
-      {/* Only declare screens that actually exist as files */}
       <Stack.Screen name="index" options={{ title: "Home" }} />
       <Stack.Screen name="Login" options={{ title: "Login" }} />
     </Stack>

@@ -13,71 +13,87 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { getLogin } from "../src/API/APIEndpoint/Auth/auth";
 import { validateEmail, validatePassword } from "../src/helper/Validation";
 import { assets } from "../assets/asset";
+import { router } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
 export default function Login({ setIsNewUser }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const handlePress = async () => {
     try {
+      console.log("Login pressed");
       if (!validateEmail(email)) {
         throw new Error("Invalid email format");
-      }
-      if (!validatePassword(password)) {
+      } else if (!validatePassword(password)) {
         throw new Error("Invalid password format");
+      } else {
+        await setError("");
+        await getLogin(email, password);
       }
-      await getLogin(email, password);
     } catch (error) {
-      console.error("Login error:", error);
-      setError(error);
+      // console.error("Login error:", error.message);
+      setError(error.message || "An error occurred during login");
     }
   };
-  useEffect(() => {
-    if (error) alert(error);
-  }, [error]);
+  // useEffect(() => {
+  //   if (error) alert(error);
+  // }, [error]);
 
   return (
     <GestureHandlerRootView className="flex-1 ">
       <SafeAreaProvider>
-        <KeyboardAvoidingView
-          className="flex-1 "
-          // behavior={Platform.OS === "ios" ? "padding" : "height"}
-        >
-          <SafeAreaView className="flex-1 ">
-            <ScrollView
-              contentContainerStyle={{ gap: 12, padding: 16 }}
-              keyboardShouldPersistTaps="handled"
-            >
-              {/* <View className="flex w-full justify-center items-center"> */}
-
-              {/* </View> */}
-              {/* Email */}
-              <Text className="font-semibold text-base">Enter your email:</Text>
-              <TextInput
-                className="bg-[#eee] border border-[#ccc] rounded-xl p-3 text-white"
-                placeholder="Enter email"
-                placeholderTextColor="#aaa"
-                onChangeText={setEmail}
-                value={email}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
+        <SafeAreaView className="flex-1 ">
+          <LinearGradient
+            className="h-[300px] w-full items-center justify-center "
+            colors={["#2e2e2e", "#000000"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <Image
+              // className="mt-10"
+              source={assets.logoLight}
+              style={{ height: 100, width: 100 }}
+              resizeMode="contain"
+            />
+          </LinearGradient>
+          <KeyboardAvoidingView className="flex-1 ">
+            <View className="flex rounded-t-[50px] -mt-[50px] z-50 w-full gap-4 p-[30px] shadow-2xs bg-white">
+              <View>
+                <Text className="font-semibold text-base">
+                  Enter your email:
+                </Text>
+                <TextInput
+                  className="bg-[#eee] border border-[#ccc] rounded-xl p-4 text-black"
+                  placeholder="Enter email"
+                  placeholderTextColor="#aaa"
+                  onChangeText={setEmail}
+                  value={email}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
 
               {/* Password */}
-              <Text className="font-semibold text-base">
-                Enter your Password:
-              </Text>
-              <TextInput
-                className="bg-[#eee] border border-[#ccc] rounded-xl p-3 text-white"
-                placeholder="Enter password"
-                placeholderTextColor="#aaa"
-                onChangeText={setPassword}
-                value={password}
-                secureTextEntry
-              />
+              <View>
+                <Text className="font-semibold text-base">
+                  Enter your Password:
+                </Text>
+                <TextInput
+                  className="bg-[#eee] border border-[#ccc] rounded-xl p-4 text-black"
+                  placeholder="Enter password"
+                  placeholderTextColor="#aaa"
+                  onChangeText={setPassword}
+                  value={password}
+                  secureTextEntry
+                />
+              </View>
               {/* <View className=""> */}
               <Text className="text-center">
                 {"Don't have an account? "}
-                <Text className="font-black" onPress={() => setIsNewUser(true)}>
+                <Text
+                  className="font-black"
+                  onPress={() => router.push("./SignUp")}
+                >
                   Sign Up
                 </Text>
               </Text>
@@ -89,21 +105,14 @@ export default function Login({ setIsNewUser }) {
               {/* Button */}
               <TouchableOpacity
                 onPress={handlePress}
-                className="mt-4 h-12 rounded-lg bg-black items-center justify-center active:opacity-80"
+                className="mt-4 p-5 rounded-lg bg-black items-center justify-center active:opacity-80"
               >
                 <Text className="text-white font-semibold">Login</Text>
               </TouchableOpacity>
-            </ScrollView>
-            <View className="flex-1 flex justify-center items-center">
-              {/* <assets.login height={250} /> */}
-              <Image
-                source={assets.logo}
-                style={{ height: 100 }}
-                resizeMode="contain"
-              />
             </View>
-          </SafeAreaView>
-        </KeyboardAvoidingView>
+            {/* <assets.login height={250} /> */}
+          </KeyboardAvoidingView>
+        </SafeAreaView>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
