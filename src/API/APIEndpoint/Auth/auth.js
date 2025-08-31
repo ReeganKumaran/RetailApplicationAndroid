@@ -23,7 +23,19 @@ export const getLogin = async (email, password) => {
     });
     return response.data;
   } catch (error) {
-    console.error("Error logging in:", error.response?.data || error.message);
-    throw error.response?.data.message || "Login failed";
+    throw new Error (error.response?.data?.message || "Login failed");
+  }
+};
+
+export const getSignUp = async ({name, email, password}) => {
+  try {
+    const response = await api.post("/signup", {
+      username: name,
+      email,
+      password,
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error (error.message || "Sign Up error");
   }
 };

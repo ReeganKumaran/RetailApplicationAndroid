@@ -9,7 +9,7 @@ export default function Layout() {
       initialRouteName="index"
       screenOptions={{
         headerShadowVisible: false,
-        headerTintColor: "#fff",
+        headerTintColor: "#ffffffff",
         headerTitleStyle: { fontWeight: "bold", fontSize: 20 },
         headerTitleAlign: "center",
         contentStyle: { backgroundColor: "#fff" }, // page background
@@ -30,6 +30,7 @@ export default function Layout() {
     >
       <Stack.Screen name="index" options={{ title: "Home" }} />
       <Stack.Screen name="Login" options={{ title: "Login" }} />
+      <Stack.Screen name="Dashboard" options={{ title: "Dashboard", headerTintColor:"#000"}} />
     </Stack>
   );
 }

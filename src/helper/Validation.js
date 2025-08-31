@@ -4,6 +4,4 @@ export const validateEmail = (email) => {
 }
 export const validatePassword = (password) => {
     return password.length >= 8;
-    // const re = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
-    // return re.test(password);
 }

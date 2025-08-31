@@ -1,28 +1,58 @@
-import { View, Text, TouchableOpacity, Image } from "react-native";
-import React from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  KeyboardAvoidingView,
+} from "react-native";
+import React, { useEffect, useState } from "react";
 import {
   GestureHandlerRootView,
   ScrollView,
   TextInput,
 } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { KeyboardAvoidingView } from "react-native";
 import { router } from "expo-router";
 import { assets } from "../assets/asset";
 import { LinearGradient } from "expo-linear-gradient";
+import { validateEmail, validatePassword } from "../src/helper/Validation";
+import { getSignUp } from "../src/API/APIEndpoint/Auth/auth";
 
 export default function SignUp() {
+  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [error, setError] = useState("");
+  const handleChanges = (key, data) => {
+    // optional: normalize email
+    const value = key === "email" ? data.trim().toLowerCase() : data;
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
+  const handlePress = async () => {
+    console.log("hola");
+    try {
+      if (!validateEmail(form.email)) throw new Error("Invalid email format");
+      else if (!validatePassword(form.password))
+        throw new Error("Invalid password format");
+      else {
+        await setError("");
+        const res = await getSignUp(form);
+        console.log(res);
+        return res;
+      }
+    } catch (error) {
+      setError(error.message || "An error occurred during sign up");
+    }
+  };
+  useEffect(() => {
+    console.log(error, form);
+  }, [error]);
   return (
     <GestureHandlerRootView className="flex-1 ">
       <SafeAreaProvider>
-        <KeyboardAvoidingView
-          className="flex-1 "
-          // behavior={Platform.OS === "ios" ? "padding" : "height"}
-        >
+        <KeyboardAvoidingView className="flex-1 ">
           <SafeAreaView className="flex-1 ">
             <LinearGradient
               className="h-[300px] w-full items-center justify-center "
-              colors={["#2e2e2e", "#000000"]} 
+              colors={["#2e2e2e", "#000000"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             >
@@ -34,48 +64,42 @@ export default function SignUp() {
               />
             </LinearGradient>
             <ScrollView
-              className="flex rounded-t-[50px] -mt-[50px] z-50 w-full gap-4 p-[30px] shadow-2xs bg-white"
-              contentContainerStyle={{ gap: 12 }}
-              keyboardShouldPersistTaps="handled"
+              className="flex rounded-t-[50px] -mt-[50px] z-50 w-full gap-4 p-[30px] shadow-2xs bg-white h-[200px]"
+              contentContainerStyle={{ gap: 12, flexGrow: 1 }}
+              // keyboardShouldPersistTaps="handled"
             >
-              {/* <View className="flex w-full justify-center items-center"> */}
-
-              {/* </View> */}
-              {/* Email */}
               <Text className="font-semibold text-base">Enter your Name:</Text>
               <TextInput
-                className="bg-[#eee] border border-[#ccc] rounded-xl p-4 text-white"
+                className="bg-[#eee] border border-[#ccc] rounded-xl p-4 "
                 placeholder="Enter Name"
                 placeholderTextColor="#aaa"
-                // onChangeText={setEmail}
-                // value={email}
+                onChangeText={(text) => handleChanges("name", text)}
+                value={form.name}
                 keyboardType="name"
                 autoCapitalize="none"
               />
               <Text className="font-semibold text-base">Enter your email:</Text>
               <TextInput
-                className="bg-[#eee] border border-[#ccc] rounded-xl p-4 text-white"
+                className="bg-[#eee] border border-[#ccc] rounded-xl p-4"
                 placeholder="Enter email"
                 placeholderTextColor="#aaa"
-                // onChangeText={setEmail}
-                // value={email}
+                onChangeText={(text) => handleChanges("email", text)}
+                value={form.email}
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
 
-              {/* Password */}
               <Text className="font-semibold text-base">
                 Enter your Password:
               </Text>
               <TextInput
-                className="bg-[#eee] border border-[#ccc] rounded-xl p-4 text-white"
+                className="bg-[#eee] border border-[#ccc] rounded-xl p-4 "
                 placeholder="Enter password"
                 placeholderTextColor="#aaa"
-                // onChangeText={setPassword}
-                // value={password}
+                onChangeText={(text) => handleChanges("password", text)}
+                value={form.password}
                 secureTextEntry
               />
-              {/* <View className=""> */}
               <Text className="text-center">
                 {"Already have an account? "}
                 <Text
@@ -85,14 +109,8 @@ export default function SignUp() {
                   Login
                 </Text>
               </Text>
-              {/* </View> */}
-
-              {/* Error Message */}
-              {/* {error ? <Text className="text-red-500">{error}</Text> : null} */}
-
-              {/* Button */}
               <TouchableOpacity
-                // onPress={handlePress}
+                onPress={handlePress}
                 className="mt-4 p-5 rounded-lg bg-black items-center justify-center active:opacity-80"
               >
                 <Text className="text-white font-semibold">Login</Text>
