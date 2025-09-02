@@ -1,14 +1,14 @@
 import { Stack } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { StyleSheet } from "react-native";
-import "../global.css";
+import "../../global.css";
 
 export default function Layout() {
   return (
     <Stack
-      initialRouteName="index"
+      initialRouteName="Login"
       screenOptions={{
-        headerShown: false,
+        
         headerShadowVisible: false,
         headerTintColor: "#ffffffff",
         headerTitleStyle: { fontWeight: "bold", fontSize: 20 },
@@ -29,6 +29,7 @@ export default function Layout() {
         // ),
       }}
     >
+      <Stack.Screen name="Login" options={{ title: "Login" }} />
     </Stack>
   );
 }

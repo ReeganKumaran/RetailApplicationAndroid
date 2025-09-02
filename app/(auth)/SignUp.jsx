@@ -1,22 +1,21 @@
+import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
+import { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  TouchableOpacity,
   Image,
   KeyboardAvoidingView,
+  Text,
+  TouchableOpacity
 } from "react-native";
-import React, { useEffect, useState } from "react";
 import {
   GestureHandlerRootView,
   ScrollView,
   TextInput,
 } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
-import { assets } from "../assets/asset";
-import { LinearGradient } from "expo-linear-gradient";
-import { validateEmail, validatePassword } from "../src/helper/Validation";
-import { getSignUp } from "../src/API/APIEndpoint/Auth/auth";
+import { assets } from "../../assets/asset";
+import { getSignUp } from "../../src/API/APIEndpoint/Auth/auth";
+import { validateEmail, validatePassword } from "../../src/helper/Validation";
 
 export default function SignUp() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
