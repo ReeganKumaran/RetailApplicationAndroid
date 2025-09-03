@@ -23,7 +23,7 @@ export default function Login({ setIsNewUser }) {
         const res = await getLogin(email, password);
         setError("");
         console.log(res);
-        router.push("/Dashboard");
+        router.push("/(auth)/Login.jsx");
       }
     } catch (error) {
       setError(error.message || "An error occurred during login");
