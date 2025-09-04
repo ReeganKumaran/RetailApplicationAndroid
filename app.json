@@ -1,13 +1,14 @@
 {
   "expo": {
-    "name":"",
+    "name": "",
     "icon": "./assets/images/Logo.png",
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/Logo.png",
         "backgroundColor": "#FFFFFF"
       },
-      "package": "com.reegankumaran.srk"
+      "package": "com.reegankumaran.srk",
+      "softwareKeyboardLayoutMode": "resize"
     },
     "plugins": [
       [
