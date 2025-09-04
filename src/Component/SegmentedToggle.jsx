@@ -9,7 +9,7 @@ export default function SegmentedToggle({
   const [value, setValue] = useState(initial);
 
   return (
-    <View className="flex-row items-center bg-gray-100 rounded-full justify-between p-1">
+    <View className="flex-row items-center bg-gray-200 rounded-full justify-around p-1">
       {options.map((opt) => {
         const selected = value === opt;
         return (
@@ -19,13 +19,13 @@ export default function SegmentedToggle({
               setValue(opt);
               if (onChange) onChange(opt);
             }}
-            className={`px-4 py-2 rounded-full ${
-              selected ? "bg-blue-100" : "bg-transparent"
+            className={`px-4 py-2  rounded-full ${`w-1/${options.length}`}  ${
+              selected ? "bg-blue-200" : "bg-transparent"
             }`}
             android_ripple={{ color: "#e5e7eb", borderless: false }}
           >
             <Text
-              className={`text-sm ${
+              className={`text-sm text-center ${
                 selected ? "text-blue-600 font-semibold" : "text-gray-700"
               }`}
             >
