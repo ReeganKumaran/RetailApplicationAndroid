@@ -81,22 +81,22 @@ export default function Dashboard() {
                   style={{ borderRadius: 16, alignSelf: "center" }}
                   withVerticalLines={false}
                 />
-                <View className="flex flex-row gap-2 justify-between w-full">
-                  <View className="flex flex-row bg-gray-800 p-4 rounded-lg ">
+                <View className="flex flex-row gap-2 pe-4 justify-between w-full">
+                  <View className="flex w-1/3 flex-row bg-gray-800 p-4 rounded-lg ">
                     <Box color="#ffffff" />
                     <View className="ms-2">
                       <Text className="text-white">0</Text>
                       <Text className="text-white">Box </Text>
                     </View>
                   </View>
-                  <View className="flex flex-row bg-gray-800 p-4 rounded-lg ">
+                  <View className="flex w-1/3 flex-row bg-gray-800 p-4 rounded-lg ">
                     <DollarSign color="#ffffff" />
                     <View className="ms-2">
                       <Text className="text-white">0</Text>
                       <Text className="text-white">Due </Text>
                     </View>
                   </View>
-                  <View className="flex flex-row bg-gray-800 p-4 rounded-lg ">
+                  <View className="flex w-1/3 flex-row bg-gray-800 p-4 rounded-lg ">
                     <DollarSign color="#ffffff" />
                     <View className="ms-2">
                       <Text className="text-white">0</Text>
