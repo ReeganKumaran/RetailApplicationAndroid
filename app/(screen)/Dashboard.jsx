@@ -52,6 +52,7 @@ const handleAddClient = () => {
   console.log("Hello")
   router.push("/(screen)/AddClient");
   // git commit -m "Add navigation to AddClient screen"
+  // git commit -m "Add navigation to AddClient screen"
   // Your logic to add a client
 };
 
