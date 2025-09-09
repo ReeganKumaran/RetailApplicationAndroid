@@ -64,8 +64,10 @@ export default function AddClient() {
             onPress={() => router.push("/(screen)/Dashboard")}
             className="absolute rounded-full z-50 p-5 bottom-5 right-5 bg-black/40"
           >
+            {/*  */}
             <Animated.View style={animation}>
               <Plus color="#ffffff" />
+              {/* hell */}
             </Animated.View>
           </TouchableOpacity>
         </SafeAreaView>
