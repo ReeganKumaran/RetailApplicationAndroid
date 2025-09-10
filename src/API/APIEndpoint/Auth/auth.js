@@ -1,4 +1,5 @@
 import api from "../../api";
+import { storeToken } from "./token";
 
 // Get Auth Token
 export const getAuthToken = async () => {
@@ -21,6 +22,7 @@ export const getLogin = async (email, password) => {
       email,
       password,
     });
+    storeToken(response.data.token);
     return response.data;
   } catch (error) {
     throw new Error (error.response?.data?.message || "Login failed");
@@ -39,3 +41,17 @@ export const getSignUp = async ({name, email, password}) => {
     throw new Error (error.message || "Sign Up error");
   }
 };
+
+
+export const verifyOTP = async (email, otp) => {
+  try {
+    const response = await api.post("/signup/verify", {
+      email,
+      otp,
+    });
+    storeToken(response.data.token);
+    return response.data;
+  } catch (error) {
+    throw new Error (error.response?.data?.message || "OTP verification failed");
+  }
+}

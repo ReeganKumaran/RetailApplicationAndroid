@@ -2,11 +2,11 @@ import { Text, TouchableOpacity, View } from "react-native";
 import { router } from "expo-router";
 import { useEffect } from "react";
 export default function Index() {
-  useEffect(() => {
-    setTimeout(() => {
-      router.push("/(screen)/Dashboard");
-    }, 500);
-  }, []);
+  // useEffect(() => {
+  //   setTimeout(() => {
+  //     router.push("/(screen)/Dashboard");
+  //   }, 500);
+  // }, []);
   return (
     <View className="flex-1 justify-end p-5">
       <TouchableOpacity
