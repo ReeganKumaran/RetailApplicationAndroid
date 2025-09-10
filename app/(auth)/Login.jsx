@@ -6,7 +6,7 @@ import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { assets } from "../../assets/asset";
-import { getLogin } from "../../src/API/APIEndpoint/Auth/auth";
+import { getLogin } from "../../src/API/Auth/auth";
 import { validateEmail, validatePassword } from "../../src/helper/Validation";
 export default function Login({ setIsNewUser }) {
   const [email, setEmail] = useState("");
@@ -21,9 +21,8 @@ export default function Login({ setIsNewUser }) {
         throw new Error("Invalid password format");
       } else {
         const res = await getLogin(email, password);
-        setError("");
-        console.log(res);
-        router.push("/Dashboard");
+        console.log("Login response jsx:", res.data.token);
+        if (res.statusCode === 200) router.push("/Dashboard");
       }
     } catch (error) {
       setError(error.message || "An error occurred during login");

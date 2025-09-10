@@ -14,7 +14,7 @@ import {
 } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { assets } from "../../assets/asset";
-import { getSignUp, verifyOTP } from "../../src/API/APIEndpoint/Auth/auth";
+import { getSignUp, verifyOTP } from "../../src/API/Auth/auth";
 import { validateEmail, validatePassword } from "../../src/helper/Validation";
 
 export default function SignUp() {

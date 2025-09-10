@@ -1,6 +1,9 @@
 import { Text, TouchableOpacity, View } from "react-native";
 import { router } from "expo-router";
 import { useEffect } from "react";
+if (__DEV__) {
+  require("../ReactotronConfig");
+}
 export default function Index() {
   // useEffect(() => {
   //   setTimeout(() => {

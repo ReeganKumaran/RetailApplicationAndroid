@@ -12,7 +12,8 @@ import { LineChart, BarChart } from "react-native-chart-kit";
 import { Box, DollarSign, IndianRupee, Plus } from "lucide-react-native";
 import SegmentedToggle from "../../src/Component/SegmentedToggle";
 import { router } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { getClients } from "../../src/API/getApi";
 
 const screenWidth = Dimensions.get("window").width;
 const chartWidth = screenWidth - 32; // padding
@@ -49,27 +50,48 @@ const barData = {
 };
 
 const handleAddClient = () => {
-  console.log("Hello")
+  console.log("Hello");
   router.push("/(screen)/AddClient");
-  // git commit -m "Add navigation to AddClient screen"
-  // git commit -m "Add navigation to AddClient screen"
-  // git commit -m "Add navigation to AddClient screen"
-  // Your logic to add a client
 };
 
 export default function Dashboard() {
+  // const [resDate, setDate] = useState("");
   useEffect(() => {
-    setTimeout(() => {
-      router.push("/(screen)/AddClient");
-    }, 500);
-    // Your effect logic here
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await getClients();
+        if (!cancelled) {
+          console.log(res);
+          // setDate(res);
+        }
+      } catch (e) {
+        if (!cancelled) {
+          console.warn("getClients failed", e);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
+  // useEffect(() => {
+  //   setTimeout(() => {
+  //     router.push("/(screen)/AddClient");
+  //   }, 500);
+  // Your effect logic here
+  // }, []);
   return (
     <GestureHandlerRootView className="flex-1">
       <SafeAreaProvider>
         <KeyboardAvoidingView className="flex-1" behavior="padding">
           <SafeAreaView className="flex-1">
-            <TouchableOpacity onPress={() => {handleAddClient()}} className="absolute rounded-full z-50 p-5 bottom-5 right-5 bg-black/40 ">
+            <TouchableOpacity
+              onPress={() => {
+                handleAddClient();
+              }}
+              className="absolute rounded-full z-50 p-5 bottom-5 right-5 bg-black/40 "
+            >
               <Plus color="#ffffff" />
             </TouchableOpacity>
             <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }}>

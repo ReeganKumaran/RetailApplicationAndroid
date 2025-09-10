@@ -1,4 +1,4 @@
-import api from "../../api";
+import api from "../api";
 import { storeToken } from "./token";
 
 // Get Auth Token
@@ -22,7 +22,8 @@ export const getLogin = async (email, password) => {
       email,
       password,
     });
-    storeToken(response.data.token);
+    // console.log("Login response:", response.data.data);
+    await storeToken(response.data.data.token);
     return response.data;
   } catch (error) {
     throw new Error (error.response?.data?.message || "Login failed");

@@ -1,6 +1,7 @@
 import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
 import { baseURL } from "./APIEndpoint/APIEndpoint";
+import { getToken, removeToken } from "./Auth/token";
 
 const api = axios.create({
   baseURL: baseURL(), // Change to your backend URL if needed
@@ -12,7 +13,7 @@ const api = axios.create({
 // Add request interceptor
 api.interceptors.request.use(async (config) => {
   try {
-    const token = await AsyncStorage.getItem("token"); // get token from storage
+    const token = await getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -21,5 +22,22 @@ api.interceptors.request.use(async (config) => {
   }
   return config;
 });
+
+// Add response interceptor to handle expired/invalid token
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const status = error?.response?.status;
+    if (status === 401 || status === 403) {
+      try {
+        await removeToken();
+      } catch {}
+      try {
+        router.replace("/(auth)/Login");
+      } catch {}
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default api;
