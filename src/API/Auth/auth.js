@@ -50,7 +50,7 @@ export const verifyOTP = async (email, otp) => {
       email,
       otp,
     });
-    storeToken(response.data.token);
+    await storeToken(response.data.token);
     return response.data;
   } catch (error) {
     throw new Error (error.response?.data?.message || "OTP verification failed");

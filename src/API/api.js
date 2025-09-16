@@ -28,6 +28,7 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const status = error?.response?.status;
+    console.log('Error status:', status)
     if (status === 401 || status === 403) {
       try {
         await removeToken();
