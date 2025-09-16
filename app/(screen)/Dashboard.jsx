@@ -1,19 +1,19 @@
+import { router } from "expo-router";
+import { Box, DollarSign, IndianRupee } from "lucide-react-native";
 import {
-  View,
-  Text,
-  KeyboardAvoidingView,
   Dimensions,
+  KeyboardAvoidingView,
   ScrollView,
-  TouchableOpacity,
+  Text,
+  View,
 } from "react-native";
+import { LineChart } from "react-native-chart-kit";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { LineChart, BarChart } from "react-native-chart-kit";
-import { Box, DollarSign, IndianRupee, Plus } from "lucide-react-native";
+import { getRental } from "../../src/API/getApi";
 import SegmentedToggle from "../../src/Component/SegmentedToggle";
-import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { getClients } from "../../src/API/getApi";
+import { rentalFormater } from "../../src/utils/Formater";
 
 const screenWidth = Dimensions.get("window").width;
 const chartWidth = screenWidth - 32; // padding
@@ -55,26 +55,44 @@ const handleAddClient = () => {
 };
 
 export default function Dashboard() {
-  // const [resDate, setDate] = useState("");
+  const [rental, setRental] = useState("");
+  const [error, setError] = useState("");
+  // (async function () {
+  //   const res = await getClients();
+  //   console.log(res);
+  // })();
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await getClients();
-        if (!cancelled) {
-          console.log(res);
-          // setDate(res);
-        }
-      } catch (e) {
-        if (!cancelled) {
-          console.warn("getClients failed", e);
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+    getRentalData();
   }, []);
+  const getRentalData = async () => {
+    try {
+      const res = await getRental();
+      setRental(rentalFormater(res.data));
+    } catch (error) {
+      console.error("error : " + error.message);
+    }
+  };
+  useEffect(() => {
+    console.log("rental" + JSON.stringify(rental));
+  }, [rental]);
+  //   let cancelled = false;r
+  //   (async () => {
+  //     try {
+  //       const res = await getClients();
+  //       console.log("res "+ res);
+  //       // if (!cancelled) {
+  //       //   // setDate(res);
+  //       // }
+  //     } catch (e) {
+  //       if (!cancelled) {
+  //         console.warn("getClients failed", e);
+  //       }
+  //     }
+  //   })();
+  //   return () => {
+  //     cancelled = true;
+  //   };
+  // }, []);
   // useEffect(() => {
   //   setTimeout(() => {
   //     router.push("/(screen)/AddClient");
@@ -86,14 +104,14 @@ export default function Dashboard() {
       <SafeAreaProvider>
         <KeyboardAvoidingView className="flex-1" behavior="padding">
           <SafeAreaView className="flex-1">
-            <TouchableOpacity
+            {/* <TouchableOpacity
               onPress={() => {
                 handleAddClient();
               }}
               className="absolute rounded-full z-50 p-5 bottom-5 right-5 bg-black/40 "
             >
               <Plus color="#ffffff" />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
             <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }}>
               {/* Line Chart */}
               <View className="mt-2 flex flex-col gap-4">
@@ -134,21 +152,21 @@ export default function Dashboard() {
                     console.log("Selected:", val);
                   }}
                 />
-                {Array.from({ length: 10 }).map((_, idx) => (
+                {rental?.map((item, idx) => (
                   <View
                     key={idx}
                     className="flex flex-col p-3 shadow-md bg-gray-800 rounded-lg"
                   >
                     <View className="flex flex-row justify-between w-full">
                       <Text className="text-white text-[16px] font-bold">
-                        Name
+                        {item.name}
                       </Text>
                       <Text className="text-white flex flex-row justify-center items-center text-[20px]">
-                        <IndianRupee color="#ffffff" size={14} />0
+                        <IndianRupee color="#ffffff" size={14} />{item.price}
                       </Text>
                     </View>
-                    <Text className="text-white text-[16px] ">Items type</Text>
-                    <Text className="text-white text-[16px] ">Size 1x2 2</Text>
+                    <Text className="text-white text-[16px] ">{item.itemName}</Text>
+                    <Text className="text-white text-[16px] ">{item.size}</Text>
                   </View>
                 ))}
               </View>
