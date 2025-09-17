@@ -181,23 +181,44 @@ export default function BasicDetails() {
               />
             </View>
           </View>
-          <View className="bg-white rounded-xl p-4 ">
-            <Text className="font-semibold text-base text-gray-700 mb-2">
-              Size <Text className="text-red-500">*</Text>
-            </Text>
-            <TextInput
-              className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-black"
-              placeholder="Enter Size"
-              placeholderTextColor="#999"
-              returnKeyType="next"
-              value={formData.itemDetail.size}
-              onChangeText={(text) =>
-                setFormData({
-                  ...formData,
-                  itemDetail: { ...formData.itemDetail, size: text },
-                })
-              }
-            />
+          <View className="bg-white flex-row rounded-xl p-4 gap-10">
+            <View className="flex-1">
+              <Text className="font-semibold text-base text-gray-700 mb-2">
+                Size <Text className="text-red-500">*</Text>
+              </Text>
+              <TextInput
+                className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-black"
+                placeholder="Enter Size"
+                placeholderTextColor="#999"
+                returnKeyType="next"
+                value={formData.itemDetail.size}
+                onChangeText={(text) =>
+                  setFormData({
+                    ...formData,
+                    itemDetail: { ...formData.itemDetail, size: text },
+                  })
+                }
+              />
+            </View>
+            <View className="flex-1">
+              <Text className="font-semibold text-base text-gray-700 mb-2">
+                Advance Amount <Text className="text-red-500">*</Text>
+              </Text>
+              <TextInput
+                className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-black"
+                placeholder="Enter Amount"
+                placeholderTextColor="#999"
+                returnKeyType="next"
+                keyboardType="numeric"
+                value={formData.itemDetail.advanceAmount?.toString() || ""}
+                onChangeText={(text) =>
+                  setFormData({
+                    ...formData,
+                    itemDetail: { ...formData.itemDetail, advanceAmount: parseInt(text) || 0 },
+                  })
+                }
+              />
+            </View>
           </View>
         </View>
 

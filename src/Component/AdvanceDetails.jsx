@@ -15,6 +15,7 @@ export default function AdvanceDetails() {
       size: "",
       price: "",
       quantity: "",
+      advanceAmount: "",
     },
     deliveryDate: "",
     returnDate: "",
@@ -178,24 +179,45 @@ export default function AdvanceDetails() {
               />
             </View>
           </View>
-          <View className="bg-white rounded-xl p-4 shadow-sm mt-4">
-            <Text className="font-semibold text-base text-gray-700 mb-2">
-              Price (₹) <Text className="text-red-500">*</Text>
-            </Text>
-            <TextInput
-              className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-black"
-              placeholder="Enter Price"
-              placeholderTextColor="#999"
-              keyboardType="numeric"
-              returnKeyType="next"
-              value={formData.itemDetail.price}
-              onChangeText={(text) =>
-                setFormData({
-                  ...formData,
-                  itemDetail: { ...formData.itemDetail, price: text },
-                })
-              }
-            />
+          <View className="flex-row gap-4 mt-4">
+            <View className="bg-white rounded-xl p-4 shadow-sm flex-1">
+              <Text className="font-semibold text-base text-gray-700 mb-2">
+                Price (₹) <Text className="text-red-500">*</Text>
+              </Text>
+              <TextInput
+                className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-black"
+                placeholder="Enter Price"
+                placeholderTextColor="#999"
+                keyboardType="numeric"
+                returnKeyType="next"
+                value={formData.itemDetail.price}
+                onChangeText={(text) =>
+                  setFormData({
+                    ...formData,
+                    itemDetail: { ...formData.itemDetail, price: text },
+                  })
+                }
+              />
+            </View>
+            <View className="bg-white rounded-xl p-4 shadow-sm flex-1">
+              <Text className="font-semibold text-base text-gray-700 mb-2">
+                Advance Amount (₹) <Text className="text-red-500">*</Text>
+              </Text>
+              <TextInput
+                className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-black"
+                placeholder="Enter Amount"
+                placeholderTextColor="#999"
+                returnKeyType="next"
+                keyboardType="numeric"
+                value={formData.itemDetail.advanceAmount?.toString() || ""}
+                onChangeText={(text) =>
+                  setFormData({
+                    ...formData,
+                    itemDetail: { ...formData.itemDetail, advanceAmount: parseInt(text) || 0 },
+                  })
+                }
+              />
+            </View>
           </View>
         </View>
 
