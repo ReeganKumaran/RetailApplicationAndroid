@@ -6,21 +6,22 @@ import {
   ScrollView,
   Text,
   View,
+  Pressable,
 } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { getRental } from "../../src/API/getApi";
 import SegmentedToggle from "../../src/Component/SegmentedToggle";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import { rentalFormater } from "../../src/utils/Formater";
 
 const screenWidth = Dimensions.get("window").width;
 const chartWidth = screenWidth - 32; // padding
-
 const chartConfig = {
-  backgroundGradientFrom: "#000000ff",
-  backgroundGradientTo: "#0f172a",
+  backgroundGradientFrom: "#040509ff",
+  backgroundGradientTo: "#0a1121ff",
   decimalPlaces: 0,
   color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
   labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
@@ -57,17 +58,24 @@ const handleAddClient = () => {
 export default function Dashboard() {
   const [rental, setRental] = useState("");
   const [error, setError] = useState("");
+
+
+
   // (async function () {
   //   const res = await getClients();
   //   console.log(res);
   // })();
-  useEffect(() => {
-    getRentalData();
-  }, []);
+  // Re-fetch every time Dashboard gains focus
+  useFocusEffect(
+    useCallback(() => {
+      console.log("Hellow");
+      getRentalData();
+    }, [])
+  );
   const getRentalData = async () => {
     try {
       const res = await getRental();
-      setRental(rentalFormater(res.data));
+      setRental(res.data.rentals);
     } catch (error) {
       console.error("error : " + error.message);
     }
@@ -75,49 +83,24 @@ export default function Dashboard() {
   useEffect(() => {
     console.log("rental" + JSON.stringify(rental));
   }, [rental]);
-  //   let cancelled = false;r
-  //   (async () => {
-  //     try {
-  //       const res = await getClients();
-  //       console.log("res "+ res);
-  //       // if (!cancelled) {
-  //       //   // setDate(res);
-  //       // }
-  //     } catch (e) {
-  //       if (!cancelled) {
-  //         console.warn("getClients failed", e);
-  //       }
-  //     }
-  //   })();
-  //   return () => {
-  //     cancelled = true;
-  //   };
-  // }, []);
-  // useEffect(() => {
-  //   setTimeout(() => {
-  //     router.push("/(screen)/AddClient");
-  //   }, 500);
-  // Your effect logic here
-  // }, []);
+
   return (
     <GestureHandlerRootView className="flex-1">
       <SafeAreaProvider>
         <KeyboardAvoidingView className="flex-1" behavior="padding">
           <SafeAreaView className="flex-1">
-            {/* <TouchableOpacity
-              onPress={() => {
-                handleAddClient();
-              }}
-              className="absolute rounded-full z-50 p-5 bottom-5 right-5 bg-black/40 "
-            >
-              <Plus color="#ffffff" />
-            </TouchableOpacity> */}
-            <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }}>
-              {/* Line Chart */}
-              <View className="mt-2 flex flex-col gap-4">
-                <LineChart
-                  data={lineData}
-                  width={chartWidth}
+            <View  style={{ flex: 1 }}>
+              {/* Scrollable Content */}
+              <ScrollView
+                contentContainerStyle={{ padding: 16, gap: 16 }}
+              >
+                {/* Line Chart */}
+                <View className="mt-2 flex flex-col gap-4">
+                  <View className=""></View>
+
+                  <LineChart
+                    data={lineData}
+                    width={chartWidth}
                   height={220}
                   chartConfig={chartConfig}
                   bezier
@@ -125,21 +108,21 @@ export default function Dashboard() {
                   withVerticalLines={false}
                 />
                 <View className="flex flex-row gap-2 pe-4 justify-between w-full">
-                  <View className="flex w-1/3 flex-row bg-gray-800 p-4 rounded-lg ">
+                  <View className="flex w-1/3 flex-row bg-gray-950 p-4 rounded-lg ">
                     <Box color="#ffffff" />
                     <View className="ms-2">
                       <Text className="text-white">0</Text>
                       <Text className="text-white">Box </Text>
                     </View>
                   </View>
-                  <View className="flex w-1/3 flex-row bg-gray-800 p-4 rounded-lg ">
+                  <View className="flex w-1/3 flex-row bg-gray-950 p-4 rounded-lg ">
                     <DollarSign color="#ffffff" />
                     <View className="ms-2">
                       <Text className="text-white">0</Text>
                       <Text className="text-white">Due </Text>
                     </View>
                   </View>
-                  <View className="flex w-1/3 flex-row bg-gray-800 p-4 rounded-lg ">
+                  <View className="flex w-1/3 flex-row bg-gray-950 p-4 rounded-lg ">
                     <DollarSign color="#ffffff" />
                     <View className="ms-2">
                       <Text className="text-white">0</Text>
@@ -152,25 +135,37 @@ export default function Dashboard() {
                     console.log("Selected:", val);
                   }}
                 />
-                {rental?.map((item, idx) => (
-                  <View
-                    key={idx}
-                    className="flex flex-col p-3 shadow-md bg-gray-800 rounded-lg"
-                  >
-                    <View className="flex flex-row justify-between w-full">
-                      <Text className="text-white text-[16px] font-bold">
-                        {item.name}
-                      </Text>
-                      <Text className="text-white flex flex-row justify-center items-center text-[20px]">
-                        <IndianRupee color="#ffffff" size={14} />{item.price}
-                      </Text>
-                    </View>
-                    <Text className="text-white text-[16px] ">{item.itemName}</Text>
-                    <Text className="text-white text-[16px] ">{item.size}</Text>
-                  </View>
-                ))}
-              </View>
-            </ScrollView>
+                {rental.length > 0 &&
+                  rental?.map((item, idx) => (
+                    <Pressable
+                      key={idx}
+                      onPress={() => {
+                        console.log("Navigating with item:", item);
+                        try {
+                          // Try simpler navigation first
+                          router.push(`/(screen)/RentalDetails?id=${item._id || item.id}&data=${encodeURIComponent(JSON.stringify(item))}`);
+                        } catch (error) {
+                          console.error("Navigation error:", error);
+                        }
+                      }}
+                      className="flex flex-col p-3 shadow-md bg-gray-950 rounded-lg active:opacity-80"
+                    >
+                      <View className="flex flex-row justify-between w-full">
+                        <Text className="text-white text-[16px] font-bold">
+                          {item.itemDetail?.name || item.name}
+                        </Text>
+                        <Text className="text-white flex flex-row justify-center items-center text-[20px]">
+                          <IndianRupee color="#ffffff" size={14} />
+                          {item.itemDetail?.totalPrice || item.totalRent || item.price}
+                        </Text>
+                      </View>
+                      <Text className="text-white text-[16px] ">{item.customer || item.customerDetail?.customerName}</Text>
+                      <Text className="text-white text-[16px] ">{item.itemDetail?.size || item.size} &bull; {item.itemDetail?.quantity || item.quantity} pcs</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </ScrollView>
+            </View>
           </SafeAreaView>
         </KeyboardAvoidingView>
       </SafeAreaProvider>
