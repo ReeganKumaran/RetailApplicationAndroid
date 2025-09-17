@@ -9,3 +9,14 @@ export const getRental = async () => {
     return error.response?.data || error.message;
   }
 };
+
+export const getCustomers = async () => {
+  try {
+    const response = await api.get("/customers");
+    console.log("response getCustomers:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching customers:", error.response?.data || error.message);
+    return error.response?.data || error.message;
+  }
+};
