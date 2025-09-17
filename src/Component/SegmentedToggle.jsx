@@ -20,13 +20,13 @@ export default function SegmentedToggle({
               if (onChange) onChange(opt);
             }}
             className={`px-4 py-2  rounded-full ${options.length === 2 ? "w-1/2" : "w-1/3"}  ${
-              selected ? "bg-blue-200" : "bg-transparent"
+              selected ? "bg-black/80" : "bg-transparent"
             }`}
             android_ripple={{ color: "#e5e7eb", borderless: false }}
           >
             <Text
               className={`text-sm text-center ${
-                selected ? "text-blue-600 font-semibold" : "text-gray-700"
+                selected ? "text-white font-semibold" : "text-gray-700"
               }`}
             >
               {opt}
