@@ -59,8 +59,6 @@ export default function Dashboard() {
   const [rental, setRental] = useState("");
   const [error, setError] = useState("");
 
-
-
   // (async function () {
   //   const res = await getClients();
   //   console.log(res);
@@ -89,11 +87,9 @@ export default function Dashboard() {
       <SafeAreaProvider>
         <KeyboardAvoidingView className="flex-1" behavior="padding">
           <SafeAreaView className="flex-1">
-            <View  style={{ flex: 1 }}>
+            <View style={{ flex: 1 }}>
               {/* Scrollable Content */}
-              <ScrollView
-                contentContainerStyle={{ padding: 16, gap: 16 }}
-              >
+              <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }}>
                 {/* Line Chart */}
                 <View className="mt-2 flex flex-col gap-4">
                   <View className=""></View>
@@ -101,68 +97,77 @@ export default function Dashboard() {
                   <LineChart
                     data={lineData}
                     width={chartWidth}
-                  height={220}
-                  chartConfig={chartConfig}
-                  bezier
-                  style={{ borderRadius: 16, alignSelf: "center" }}
-                  withVerticalLines={false}
-                />
-                <View className="flex flex-row gap-2 pe-4 justify-between w-full">
-                  <View className="flex w-1/3 flex-row bg-gray-950 p-4 rounded-lg ">
-                    <Box color="#ffffff" />
-                    <View className="ms-2">
-                      <Text className="text-white">0</Text>
-                      <Text className="text-white">Box </Text>
+                    height={220}
+                    chartConfig={chartConfig}
+                    bezier
+                    style={{ borderRadius: 16, alignSelf: "center" }}
+                    withVerticalLines={false}
+                  />
+                  <View className="flex flex-row gap-2 pe-4 justify-between w-full">
+                    <View className="flex w-1/3 flex-row bg-gray-950 p-4 rounded-lg ">
+                      <Box color="#ffffff" />
+                      <View className="ms-2">
+                        <Text className="text-white">0</Text>
+                        <Text className="text-white">Box </Text>
+                      </View>
+                    </View>
+                    <View className="flex w-1/3 flex-row bg-gray-950 p-4 rounded-lg ">
+                      <DollarSign color="#ffffff" />
+                      <View className="ms-2">
+                        <Text className="text-white">0</Text>
+                        <Text className="text-white">Due </Text>
+                      </View>
+                    </View>
+                    <View className="flex w-1/3 flex-row bg-gray-950 p-4 rounded-lg ">
+                      <DollarSign color="#ffffff" />
+                      <View className="ms-2">
+                        <Text className="text-white">0</Text>
+                        <Text className="text-white">Rent </Text>
+                      </View>
                     </View>
                   </View>
-                  <View className="flex w-1/3 flex-row bg-gray-950 p-4 rounded-lg ">
-                    <DollarSign color="#ffffff" />
-                    <View className="ms-2">
-                      <Text className="text-white">0</Text>
-                      <Text className="text-white">Due </Text>
-                    </View>
-                  </View>
-                  <View className="flex w-1/3 flex-row bg-gray-950 p-4 rounded-lg ">
-                    <DollarSign color="#ffffff" />
-                    <View className="ms-2">
-                      <Text className="text-white">0</Text>
-                      <Text className="text-white">Rent </Text>
-                    </View>
-                  </View>
-                </View>
-                <SegmentedToggle
-                  onChange={(val) => {
-                    console.log("Selected:", val);
-                  }}
-                />
-                {rental.length > 0 &&
-                  rental?.map((item, idx) => (
-                    <Pressable
-                      key={idx}
-                      onPress={() => {
-                        console.log("Navigating with item:", item);
-                        try {
-                          // Try simpler navigation first
-                          router.push(`/(screen)/RentalDetails?id=${item._id || item.id}&data=${encodeURIComponent(JSON.stringify(item))}`);
-                        } catch (error) {
-                          console.error("Navigation error:", error);
-                        }
-                      }}
-                      className="flex flex-col p-3 shadow-md bg-gray-950 rounded-lg active:opacity-80"
-                    >
-                      <View className="flex flex-row justify-between w-full">
-                        <Text className="text-white text-[16px] font-bold">
+                  <SegmentedToggle
+                    onChange={(val) => {
+                      console.log("Selected:", val);
+                    }}
+                  />
+                  {rental.length > 0 &&
+                    rental?.map((item, idx) => (
+                      <Pressable
+                        key={idx}
+                        onPress={() => {
+                          console.log("Navigating with item:", item);
+                          try {
+                            // Try simpler navigation first
+                            router.push(
+                              `/(screen)/RentalDetails?id=${item._id || item.id}&data=${encodeURIComponent(JSON.stringify(item))}`
+                            );
+                          } catch (error) {
+                            console.error("Navigation error:", error);
+                          }
+                        }}
+                        className="flex flex-col p-3  shadow-md bg-gray-950 rounded-lg active:opacity-80"
+                      >
+                        <View className="flex flex-row justify-between w-full font-bold">
+                          <Text className="text-white text-[16px] ">
+                            {item.customer || item.customerDetail?.customerName}
+                          </Text>
+                          <Text className="text-white flex flex-row justify-center items-center text-[20px]">
+                            <IndianRupee color="#ffffff" size={14} />
+                            {item.itemDetail?.totalPrice ||
+                              item.totalRent ||
+                              item.price}
+                          </Text>
+                        </View>
+                        <Text className="text-white text-[16px] ">
                           {item.itemDetail?.name || item.name}
                         </Text>
-                        <Text className="text-white flex flex-row justify-center items-center text-[20px]">
-                          <IndianRupee color="#ffffff" size={14} />
-                          {item.itemDetail?.totalPrice || item.totalRent || item.price}
+                        <Text className="text-white text-[16px] ">
+                          {item.itemDetail?.size || item.size} &bull;{" "}
+                          {item.itemDetail?.quantity || item.quantity} pcs
                         </Text>
-                      </View>
-                      <Text className="text-white text-[16px] ">{item.customer || item.customerDetail?.customerName}</Text>
-                      <Text className="text-white text-[16px] ">{item.itemDetail?.size || item.size} &bull; {item.itemDetail?.quantity || item.quantity} pcs</Text>
-                    </Pressable>
-                  ))}
+                      </Pressable>
+                    ))}
                 </View>
               </ScrollView>
             </View>
