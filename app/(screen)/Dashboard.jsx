@@ -49,7 +49,6 @@ const barData = {
     },
   ],
 };
-
 const handleAddClient = () => {
   console.log("Hello");
   router.push("/(screen)/AddClient");
@@ -59,21 +58,18 @@ export default function Dashboard() {
   const [rental, setRental] = useState("");
   const [error, setError] = useState("");
 
-  // (async function () {
-  //   const res = await getClients();
-  //   console.log(res);
-  // })();
-  // Re-fetch every time Dashboard gains focus
   useFocusEffect(
     useCallback(() => {
       console.log("Hellow");
       getRentalData();
     }, [])
   );
-  const getRentalData = async () => {
+
+  const getRentalData = async (option) => {
     try {
-      const res = await getRental();
-      setRental(res.data.rentals);
+      if (option === "All") option = "";
+      const res = await getRental(option);
+      setRental(res.data?.rentals);
     } catch (error) {
       console.error("error : " + error.message);
     }
@@ -127,8 +123,10 @@ export default function Dashboard() {
                     </View>
                   </View>
                   <SegmentedToggle
+                    options={["All", "Returned", "Pending"]}
                     onChange={(val) => {
-                      console.log("Selected:", val);
+                      getRentalData(val);
+                      // console.log("Selected:", val);
                     }}
                   />
                   {rental.length > 0 &&
