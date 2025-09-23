@@ -49,6 +49,7 @@ const barData = {
     },
   ],
 };
+// hello
 const handleAddClient = () => {
   console.log("Hello");
   router.push("/(screen)/AddClient");
