@@ -78,6 +78,12 @@ export default function Login({ setIsNewUser }) {
                 value={password}
                 secureTextEntry
               />
+               <Text
+                className="font-black self-end mt-3 "
+                onPress={() => router.push("./ForgotPassword")}
+              >
+                Forgot Password
+              </Text>
             </View>
             {/* <View className=""> */}
             <Text className="text-center">
