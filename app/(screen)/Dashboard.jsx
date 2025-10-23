@@ -8,7 +8,7 @@ import {
   View,
   Pressable,
 } from "react-native";
-import { LineChart } from "react-native-chart-kit";
+import { BarChart, LineChart } from "react-native-chart-kit";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { getRental } from "../../src/API/getApi";
@@ -20,23 +20,35 @@ import { rentalFormater } from "../../src/utils/Formater";
 const screenWidth = Dimensions.get("window").width;
 const chartWidth = screenWidth - 32; // padding
 const chartConfig = {
-  backgroundGradientFrom: "#040509ff",
-  backgroundGradientTo: "#0a1121ff",
-  decimalPlaces: 0,
-  color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-  labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-  propsForBackgroundLines: {
-    strokeDasharray: "",
+  backgroundGradientFrom: "#000000ff",
+  backgroundGradientTo: "#410069ff",
+  // backgroundGradientFromOpacity: 0.8,
+  // backgroundGradientToOpacity: 0.8,
+  fillShadowGradient: "#6f4cafff", // bar fill color
+  fillShadowGradientOpacity: 1,
+  decimalPlaces: 2, // number of decimal places in y values
+  color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`, // axis label color
+  labelColor: (opacity = 1) => `rgba(200, 200, 200, ${opacity})`,
+  barPercentage: 0.3, // bar width (0–1)
+
+  propsForLabels: {
+    fontSize: 12,
+    fontWeight: "bold",
   },
-  // propsForDots: { r: "4" },
+  propsForBackgroundLines: {
+    strokeDasharray: "", // solid lines
+    strokeWidth: 0,
+    stroke: "#ccc",
+  },
 };
 
 const lineData = {
-  labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+  labels: ["Mon", "Tue", "Wed", "Thu", "Fri"],
   datasets: [
     {
-      data: [12, 19, 9, 24, 16, 20, 28],
+      data: [12, 19, 9, 24, 16],
       strokeWidth: 2,
+      borderRadius: 8,
     },
   ],
 };
@@ -56,7 +68,7 @@ const handleAddClient = () => {
 };
 
 export default function Dashboard() {
-  const [rental, setRental] = useState("");
+  const [rental, setRental] = useState([]);
   const [error, setError] = useState("");
 
   useFocusEffect(
@@ -70,7 +82,8 @@ export default function Dashboard() {
     try {
       if (option === "All") option = "";
       const res = await getRental(option);
-      setRental(res.data?.rentals);
+      const rentals = Array.isArray(res.data?.rentals) ? res.data.rentals : [];
+      setRental(rentals);
     } catch (error) {
       console.error("error : " + error.message);
     }
@@ -89,16 +102,15 @@ export default function Dashboard() {
               <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }}>
                 {/* Line Chart */}
                 <View className="mt-2 flex flex-col gap-4">
-                  <View className=""></View>
-
-                  <LineChart
+                  <BarChart
                     data={lineData}
                     width={chartWidth}
                     height={220}
                     chartConfig={chartConfig}
-                    bezier
-                    style={{ borderRadius: 16, alignSelf: "center" }}
+                    barRadius={6} // rounds the bar corners
+                    barPercentage={0.7} // make bars wider so the radius is visible
                     withVerticalLines={false}
+                    style={{ borderRadius: 16, alignSelf: "center" }}
                   />
                   <View className="flex flex-row gap-2 pe-4 justify-between w-full">
                     <View className="flex w-1/3 flex-row bg-gray-950 p-4 rounded-lg ">

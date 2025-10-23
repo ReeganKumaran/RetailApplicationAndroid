@@ -60,7 +60,6 @@ export default function Rentals() {
                   </Text>
                 </View>
                 <View className="flex flex-row gap-5">
-                  {/* Delivery */}
                   <View className="flex flex-row items-center gap-2">
                     <MaterialCommunityIcons
                       name="truck-delivery-outline"
@@ -72,7 +71,6 @@ export default function Rentals() {
                     </Text>
                   </View>
 
-                  {/* Returned */}
                   <View className="flex flex-row items-center gap-2">
                     <Fontisto
                       name="arrow-return-left"
@@ -86,7 +84,7 @@ export default function Rentals() {
                 </View>
               </Pressable>
             ))}
-        </View>
+        </View> 
       </SafeAreaView>
     </SafeAreaProvider>
   );
