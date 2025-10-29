@@ -14,10 +14,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import React, { useCallback, useEffect, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
-import {
-  getCustomers,
-  getRentalsByCustomerId,
-} from "../../src/API/getApi";
+import { getCustomers, getRental } from "../../src/API/getApi";
 
 const screenWidth = Dimensions.get("window").width;
 const chartWidth = screenWidth - 32; // padding
@@ -118,37 +115,35 @@ export default function Dashboard() {
       );
       setSummary(aggregatedTotals);
 
-      const allRentals = [];
-      for (const customer of customers) {
-        const customerId = customer._id || customer.id;
-        if (!customerId) continue;
+      // const allRentals = [];
+      // for (const customer of customers) {
+      //   const customerId = customer._id || customer.id;
+      //   if (!customerId) continue;
 
         try {
-          const response = await getRentalsByCustomerId(customerId);
-          const customerRentals = Array.isArray(response?.data?.rentals)
-            ? response.data.rentals
-            : [];
+          const response = await getRental({limit:10, page:1});
+          setRental(response?.data?.rentals || []);
+          // const customerRentals = Array.isArray(response?.data?.rentals)
+          //   ? response.data.rentals
+          //   : [];
 
-          const normalizedRentals = customerRentals.map((item) => ({
-            ...item,
-            customer: item.customer || customer.customerName,
-          }));
-          allRentals.push(...normalizedRentals);
+          // const normalizedRentals = customerRentals.map((item) => ({
+          //   ...item,
+          //   customer: item.customer || customer.customerName,
+          // }));
+          // allRentals.push(...normalizedRentals);
         } catch (customerError) {
           console.error(
             "Failed to load rentals for customer:",
-            customerId,
+            // customerId,
             customerError?.message || customerError
           );
         }
-      }
+      // }
 
-      setRental(allRentals);
+      // setRental(allRentals);
     } catch (error) {
-      console.error(
-        "Error loading dashboard data:",
-        error?.message || error
-      );
+      console.error("Error loading dashboard data:", error?.message || error);
       setError("Unable to load dashboard data.");
       setRental([]);
       setSummary({
@@ -207,9 +202,7 @@ export default function Dashboard() {
                     <View className="flex w-1/3 flex-row bg-gray-950 p-4 rounded-lg ">
                       <DollarSign color="#ffffff" />
                       <View className="ms-2">
-                        <Text className="text-white">
-                          {summary.totalRent}
-                        </Text>
+                        <Text className="text-white">{summary.totalRent}</Text>
                         <Text className="text-white">Rent</Text>
                       </View>
                     </View>

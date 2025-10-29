@@ -12,8 +12,12 @@ export default function Login({ setIsNewUser }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const headerHeight = useHeaderHeight?.() ?? 0;
   const handlePress = async () => {
+    if (loading) return; // Prevent multiple submissions
+    setLoading(true);
+    setError("");
     try {
       if (!validateEmail(email)) {
         console.log("If Login pressed with:", email, password);
@@ -23,12 +27,16 @@ export default function Login({ setIsNewUser }) {
         throw new Error("Invalid password format");
       } else {
         console.log("else Login pressed with:", email, password);
+
         const res = await getLogin(email, password);
-        console.log("Login response jsx:", res.data.token);
+        console.log("Login response jsx:", JSON.stringify(res));
         if (res.statusCode === 200) router.push("/Dashboard");
+        else throw new Error(res.message || "Login failed");
       }
     } catch (error) {
       setError(error.message || "An error occurred during login");
+    } finally {
+      setLoading(false);
     }
   };
   return (

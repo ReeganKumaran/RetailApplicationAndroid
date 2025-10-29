@@ -33,7 +33,7 @@ export default function CustomerRentals() {
   const fetchCustomerRentals = async () => {
     try {
       setLoading(true);
-      const response = await getRental();
+      const response = await getRental({ clientId: customerId, limit: null, page: null });
       console.log("All rentals response:", response);
 
       // Filter rentals for this specific customer
@@ -172,6 +172,7 @@ export default function CustomerRentals() {
                 <Pressable
                   key={idx}
                   onPress={() => {
+                    console.log("Navigating to RentalDetails with data:", rental);
                     router.push({
                       pathname: "/(screen)/RentalDetails",
                       params: {
