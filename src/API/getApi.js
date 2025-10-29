@@ -14,6 +14,19 @@ export const getRental = async (option) => {
   }
 };
 
+export const getRentalsByCustomerId = async (customerId) => {
+  try {
+    const response = await api.get("/rentals", {
+      params: {
+        id: customerId,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    return error.response?.data || error.message;
+  }
+};
+
 export const getCustomers = async () => {
   try {
     const response = await api.get("/customers");

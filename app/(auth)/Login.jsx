@@ -16,10 +16,13 @@ export default function Login({ setIsNewUser }) {
   const handlePress = async () => {
     try {
       if (!validateEmail(email)) {
+        console.log("If Login pressed with:", email, password);
         throw new Error("Invalid email format");
       } else if (!validatePassword(password)) {
+        console.log("else if Login pressed with:", email, password);
         throw new Error("Invalid password format");
       } else {
+        console.log("else Login pressed with:", email, password);
         const res = await getLogin(email, password);
         console.log("Login response jsx:", res.data.token);
         if (res.statusCode === 200) router.push("/Dashboard");

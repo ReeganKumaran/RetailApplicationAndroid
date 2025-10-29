@@ -1,21 +1,23 @@
 import { router } from "expo-router";
 import { Box, DollarSign, IndianRupee } from "lucide-react-native";
 import {
+  ActivityIndicator,
   Dimensions,
   KeyboardAvoidingView,
+  Pressable,
   ScrollView,
   Text,
   View,
-  Pressable,
 } from "react-native";
 import { BarChart, LineChart } from "react-native-chart-kit";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { getRental } from "../../src/API/getApi";
-import SegmentedToggle from "../../src/Component/SegmentedToggle";
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
-import { rentalFormater } from "../../src/utils/Formater";
+import {
+  getCustomers,
+  getRentalsByCustomerId,
+} from "../../src/API/getApi";
 
 const screenWidth = Dimensions.get("window").width;
 const chartWidth = screenWidth - 32; // padding
@@ -69,23 +71,94 @@ const handleAddClient = () => {
 
 export default function Dashboard() {
   const [rental, setRental] = useState([]);
+  const [summary, setSummary] = useState({
+    totalRented: 0,
+    totalReturned: 0,
+    activeRentals: 0,
+    totalRent: 0,
+  });
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
-      console.log("Hellow");
-      getRentalData();
+      loadDashboardData();
     }, [])
   );
 
-  const getRentalData = async (option) => {
+  const loadDashboardData = async () => {
     try {
-      if (option === "All") option = "";
-      const res = await getRental(option);
-      const rentals = Array.isArray(res.data?.rentals) ? res.data.rentals : [];
-      setRental(rentals);
+      setLoading(true);
+      setError("");
+      const customerResponse = await getCustomers();
+      const customers = Array.isArray(customerResponse?.data?.customers)
+        ? customerResponse.data.customers
+        : [];
+
+      if (!customers.length) {
+        setRental([]);
+        setSummary({
+          totalRented: 0,
+          totalReturned: 0,
+          activeRentals: 0,
+          totalRent: 0,
+        });
+        return;
+      }
+
+      const aggregatedTotals = customers.reduce(
+        (totals, customer) => {
+          totals.totalRented += customer.totalRented || 0;
+          totals.totalReturned += customer.totalReturned || 0;
+          totals.activeRentals += customer.activeRentals || 0;
+          totals.totalRent += customer.totalRent || 0;
+          return totals;
+        },
+        { totalRented: 0, totalReturned: 0, activeRentals: 0, totalRent: 0 }
+      );
+      setSummary(aggregatedTotals);
+
+      const allRentals = [];
+      for (const customer of customers) {
+        const customerId = customer._id || customer.id;
+        if (!customerId) continue;
+
+        try {
+          const response = await getRentalsByCustomerId(customerId);
+          const customerRentals = Array.isArray(response?.data?.rentals)
+            ? response.data.rentals
+            : [];
+
+          const normalizedRentals = customerRentals.map((item) => ({
+            ...item,
+            customer: item.customer || customer.customerName,
+          }));
+          allRentals.push(...normalizedRentals);
+        } catch (customerError) {
+          console.error(
+            "Failed to load rentals for customer:",
+            customerId,
+            customerError?.message || customerError
+          );
+        }
+      }
+
+      setRental(allRentals);
     } catch (error) {
-      console.error("error : " + error.message);
+      console.error(
+        "Error loading dashboard data:",
+        error?.message || error
+      );
+      setError("Unable to load dashboard data.");
+      setRental([]);
+      setSummary({
+        totalRented: 0,
+        totalReturned: 0,
+        activeRentals: 0,
+        totalRent: 0,
+      });
+    } finally {
+      setLoading(false);
     }
   };
   useEffect(() => {
@@ -116,40 +189,50 @@ export default function Dashboard() {
                     <View className="flex w-1/3 flex-row bg-gray-950 p-4 rounded-lg ">
                       <Box color="#ffffff" />
                       <View className="ms-2">
-                        <Text className="text-white">0</Text>
-                        <Text className="text-white">Box </Text>
+                        <Text className="text-white">
+                          {summary.totalRented}
+                        </Text>
+                        <Text className="text-white">Rented</Text>
                       </View>
                     </View>
                     <View className="flex w-1/3 flex-row bg-gray-950 p-4 rounded-lg ">
                       <DollarSign color="#ffffff" />
                       <View className="ms-2">
-                        <Text className="text-white">0</Text>
-                        <Text className="text-white">Due </Text>
+                        <Text className="text-white">
+                          {summary.activeRentals}
+                        </Text>
+                        <Text className="text-white">Active</Text>
                       </View>
                     </View>
                     <View className="flex w-1/3 flex-row bg-gray-950 p-4 rounded-lg ">
                       <DollarSign color="#ffffff" />
                       <View className="ms-2">
-                        <Text className="text-white">0</Text>
-                        <Text className="text-white">Rent </Text>
+                        <Text className="text-white">
+                          {summary.totalRent}
+                        </Text>
+                        <Text className="text-white">Rent</Text>
                       </View>
                     </View>
                   </View>
-                  <SegmentedToggle
-                    options={["All", "Returned", "Pending"]}
-                    onChange={(val) => {
-                      getRentalData(val);
-                      // console.log("Selected:", val);
-                    }}
-                  />
-                  {rental.length > 0 &&
-                    rental?.map((item, idx) => (
+                  {error.length > 0 && (
+                    <Text className="text-red-500 text-center">{error}</Text>
+                  )}
+                  {loading && (
+                    <ActivityIndicator size="small" color="#ffffff" />
+                  )}
+                  {!loading && rental.length === 0 && !error && (
+                    <Text className="text-gray-400 text-center">
+                      No rentals available.
+                    </Text>
+                  )}
+                  {!loading &&
+                    rental.length > 0 &&
+                    rental.map((item, idx) => (
                       <Pressable
                         key={idx}
                         onPress={() => {
                           console.log("Navigating with item:", item);
                           try {
-                            // Try simpler navigation first
                             router.push(
                               `/(screen)/RentalDetails?id=${item._id || item.id}&data=${encodeURIComponent(JSON.stringify(item))}`
                             );

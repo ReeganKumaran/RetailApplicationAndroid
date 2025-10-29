@@ -1,20 +1,20 @@
+import { useEffect, useRef, useState } from "react";
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
   Animated,
+  Platform,
+  ScrollView,
+  Text,
+  ToastAndroid,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import React, { useState, useRef, useEffect } from "react";
 import { TextInput } from "react-native-gesture-handler";
 import { postRental } from "../API/postApi";
+import { validateRentalForm } from "../helper/Validation";
 import DatePicker from "./DatePicker";
 
 export default function BasicDetails() {
-  const [showDeliveryAddress, setShowDeliveryAddress] = useState(false);
-  const slideAnimation = useRef(new Animated.Value(0)).current;
-  const [errors, setErrors] = useState({});
-  const [formData, setFormData] = useState({
+  const initialFormState = {
     customer: "",
     phoneNumber: "",
     email: "",
@@ -24,6 +24,7 @@ export default function BasicDetails() {
       size: "",
       price: "",
       quantity: "",
+      advanceAmount: "",
     },
     deliveryDate: "",
     returnDate: "",
@@ -37,7 +38,18 @@ export default function BasicDetails() {
       landmark: "",
       isPrimary: true,
     },
-  });
+  };
+
+  const [showDeliveryAddress, setShowDeliveryAddress] = useState(false);
+  const slideAnimation = useRef(new Animated.Value(0)).current;
+  const [errors, setErrors] = useState({});
+  const [formData, setFormData] = useState(initialFormState);
+
+  const validateForm = () => {
+    const { isValid, errors: newErrors } = validateRentalForm(formData, showDeliveryAddress);
+    setErrors(newErrors);
+    return isValid;
+  };
 
   useEffect(() => {
     Animated.timing(slideAnimation, {
@@ -52,9 +64,35 @@ export default function BasicDetails() {
     outputRange: [0, 24],
   });
 
+  const showToast = (message) => {
+    if (Platform.OS === 'android') {
+      ToastAndroid.show(message, ToastAndroid.SHORT);
+    }
+  };
+
   const handleSubmission = async () => {
-    const res = await postRental(formData);
-    console.log(res.status);
+    // if (!validateForm()) {
+    //   showToast('Please fill in all required fields correctly');
+    //   return;
+    // }
+
+    try {
+      const res = await postRental(formData);
+      if (res.success) {
+        showToast('Rental added successfully! 📦');
+        // Reset form data to initial state
+        setFormData(initialFormState);
+        // Reset delivery address toggle
+        setShowDeliveryAddress(false);
+        // Clear any existing errors
+        setErrors({});
+      } else {
+        showToast(res.error || 'Failed to add rental');
+      }
+    } catch (error) {
+      showToast('An error occurred. Please try again.');
+      console.error(error);
+    }
   };
 
   return (
@@ -70,16 +108,22 @@ export default function BasicDetails() {
               Customer Name <Text className="text-red-500">*</Text>
             </Text>
             <TextInput
-              className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-black"
+              className={`bg-gray-50 border ${errors.customer ? 'border-red-500' : 'border-gray-200'} rounded-lg p-3 text-black`}
               placeholder="Enter Customer Name"
               placeholderTextColor="#999"
               autoCapitalize="words"
               returnKeyType="next"
               value={formData.customer}
-              onChangeText={(text) =>
-                setFormData({ ...formData, customer: text })
-              }
+              onChangeText={(text) => {
+                setFormData({ ...formData, customer: text });
+                if (errors.customer) {
+                  setErrors({ ...errors, customer: '' });
+                }
+              }}
             />
+            {errors.customer && (
+              <Text className="text-red-500 text-sm mt-1">{errors.customer}</Text>
+            )}
           </View>
           <View className="flex-row gap-4">
             <View className="bg-white rounded-xl p-4  flex-1">
@@ -446,7 +490,7 @@ export default function BasicDetails() {
             }}
           >
             <View className="px-2 py-3 mt-10 bg-black rounded-xl flex flex-row justify-center">
-              <Text className="text-white font-bold text-lg">Submet</Text>
+              <Text className="text-white font-bold text-lg">Submit</Text>
             </View>
           </TouchableOpacity>
         </View>
