@@ -9,3 +9,27 @@ export const rentalFormater = (data) => {
   }));
   return formatedData;
 };
+
+export const formatDate = (dateString) => {
+  if (!dateString) return "N/A";
+  return new Date(dateString).toLocaleDateString("en-IN", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+};
+
+export const getStatusColor = (status) => {
+  switch (status?.toLowerCase()) {
+    case "pending":
+      return "bg-yellow-600";
+    case "delivered":
+      return "bg-blue-600";
+    case "returned":
+      return "bg-green-600";
+    case "cancelled":
+      return "bg-red-600";
+    default:
+      return "bg-gray-600";
+  }
+};

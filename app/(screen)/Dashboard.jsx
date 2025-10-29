@@ -181,7 +181,7 @@ export default function Dashboard() {
                     style={{ borderRadius: 16, alignSelf: "center" }}
                   />
                   <View className="flex flex-row gap-2 pe-4 justify-between w-full">
-                    <View className="flex w-1/3 flex-row bg-gray-950 p-4 rounded-lg ">
+                    <View className="flex w-1/3 flex-row bg-gray-950 p-4 rounded-3xl ">
                       <Box color="#ffffff" />
                       <View className="ms-2">
                         <Text className="text-white">
@@ -190,7 +190,7 @@ export default function Dashboard() {
                         <Text className="text-white">Rented</Text>
                       </View>
                     </View>
-                    <View className="flex w-1/3 flex-row bg-gray-950 p-4 rounded-lg ">
+                    <View className="flex w-1/3 flex-row bg-gray-950 p-4 rounded-3xl ">
                       <DollarSign color="#ffffff" />
                       <View className="ms-2">
                         <Text className="text-white">
@@ -199,7 +199,7 @@ export default function Dashboard() {
                         <Text className="text-white">Active</Text>
                       </View>
                     </View>
-                    <View className="flex w-1/3 flex-row bg-gray-950 p-4 rounded-lg ">
+                    <View className="flex w-1/3 flex-row bg-gray-950 p-4 rounded-3xl ">
                       <DollarSign color="#ffffff" />
                       <View className="ms-2">
                         <Text className="text-white">{summary.totalRent}</Text>
@@ -233,7 +233,7 @@ export default function Dashboard() {
                             console.error("Navigation error:", error);
                           }
                         }}
-                        className="flex flex-col p-3  shadow-md bg-gray-950 rounded-lg active:opacity-80"
+                        className="flex flex-col py-3 px-5  shadow-md bg-gray-950 rounded-3xl active:opacity-80"
                       >
                         <View className="flex flex-row justify-between w-full font-bold">
                           <Text className="text-white text-[16px] ">

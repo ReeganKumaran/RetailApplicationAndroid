@@ -30,9 +30,13 @@ export const getRental = async ({clientId, option, limit = 10, page = 1 }) => {
 //   }
 // };
 
-export const getCustomers = async () => {
+export const getCustomers = async ({ search } = {}) => {
   try {
-    const response = await api.get("/customers");
+    const response = await api.get("/customers", {
+      params: {
+        search: search || undefined
+      }
+    });
     // console.log("response getCustomers:", response.data);
     return response.data;
   } catch (error) {

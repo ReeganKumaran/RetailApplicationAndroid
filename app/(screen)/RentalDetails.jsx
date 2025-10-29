@@ -72,7 +72,7 @@ export default function RentalDetails() {
             </Text>
             <View className="space-y-2">
               <View className="flex-row justify-between">
-                <Text className="text-gray-400">Company</Text>
+                <Text className="text-gray-400">Name</Text>
                 <Text className="text-white font-medium">
                   {rental.customer || "N/A"}
                 </Text>

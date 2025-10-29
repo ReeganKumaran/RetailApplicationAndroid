@@ -8,6 +8,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { getRental } from "../../src/API/getApi";
 import { IndianRupee } from "lucide-react-native";
 import SegmentedToggle from "../../src/Component/SegmentedToggle";
+import { formatDate, getStatusColor } from "../../src/utils/Formater";
 
 export default function CustomerRentals() {
   const params = useLocalSearchParams();
@@ -33,7 +34,11 @@ export default function CustomerRentals() {
   const fetchCustomerRentals = async () => {
     try {
       setLoading(true);
-      const response = await getRental({ clientId: customerId, limit: null, page: null });
+      const response = await getRental({
+        clientId: customerId,
+        limit: null,
+        page: null,
+      });
       console.log("All rentals response:", response);
 
       // Filter rentals for this specific customer
@@ -68,30 +73,6 @@ export default function CustomerRentals() {
     }
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
-
-  const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
-      case "pending":
-        return "bg-yellow-600";
-      case "delivered":
-        return "bg-blue-600";
-      case "returned":
-        return "bg-green-600";
-      case "cancelled":
-        return "bg-red-600";
-      default:
-        return "bg-gray-600";
-    }
-  };
-
   return (
     <SafeAreaProvider>
       <SafeAreaView className="flex-1 bg-white">
@@ -108,53 +89,54 @@ export default function CustomerRentals() {
 
         <ScrollView className="flex-1 px-4 py-4">
           {customerData && (
-                <View className="my-4 bg-gray-950 rounded-lg p-4">
-                  <Text className="text-white text-lg font-bold mb-2">
-                    Customer Summary
-                  </Text>
-                  <View className="flex-row justify-between mb-2">
-                    <Text className="text-gray-400">Total Rentals:</Text>
-                    <Text className="text-white font-medium">
-                      {allRentals.length}
-                    </Text>
-                  </View>
-                  <View className="flex-row justify-between mb-2">
-                    <Text className="text-gray-400">Total Revenue:</Text>
-                    <Text className="text-white font-medium">
-                      ₹
-                      {allRentals.reduce(
-                        (sum, rental) =>
-                          sum +
-                          (rental.totalRent ||
-                            rental.itemDetail?.totalPrice ||
-                            0),
-                        0
-                      )}
-                    </Text>
-                  </View>
-                  <View className="flex-row justify-between mb-2">
-                    <Text className="text-gray-400">Pending:</Text>
-                    <Text className="text-yellow-400 font-medium">
-                      {allRentals.filter(r => r.retalStatus === "Pending").length}
-                    </Text>
-                  </View>
-                  <View className="flex-row justify-between">
-                    <Text className="text-gray-400">Returned:</Text>
-                    <Text className="text-green-400 font-medium">
-                      {allRentals.filter(r => r.retalStatus === "Returned").length}
-                    </Text>
-                  </View>
-                </View>
-              )}
-              <View className="mb-4 mx-3">
-                <SegmentedToggle
-                  options={["All", "Pending", "Returned"]}
-                  onChange={(selectedOption) => {
-                    console.log("Filter selected:", selectedOption);
-                    filterRentals(selectedOption);
-                  }}
-                />
+            <View className="my-4 bg-gray-950 rounded-lg p-4">
+              <Text className="text-white text-lg font-bold mb-2">
+                Customer Summary
+              </Text>
+              <View className="flex-row justify-between mb-2">
+                <Text className="text-gray-400">Total Rentals:</Text>
+                <Text className="text-white font-medium">
+                  {allRentals.length}
+                </Text>
               </View>
+              <View className="flex-row justify-between mb-2">
+                <Text className="text-gray-400">Total Revenue:</Text>
+                <Text className="text-white font-medium">
+                  ₹
+                  {allRentals.reduce(
+                    (sum, rental) =>
+                      sum +
+                      (rental.totalRent || rental.itemDetail?.totalPrice || 0),
+                    0
+                  )}
+                </Text>
+              </View>
+              <View className="flex-row justify-between mb-2">
+                <Text className="text-gray-400">Pending:</Text>
+                <Text className="text-yellow-400 font-medium">
+                  {allRentals.filter((r) => r.retalStatus === "Pending").length}
+                </Text>
+              </View>
+              <View className="flex-row justify-between">
+                <Text className="text-gray-400">Returned:</Text>
+                <Text className="text-green-400 font-medium">
+                  {
+                    allRentals.filter((r) => r.retalStatus === "Returned")
+                      .length
+                  }
+                </Text>
+              </View>
+            </View>
+          )}
+          <View className="mb-4 mx-3">
+            <SegmentedToggle
+              options={["All", "Pending", "Returned"]}
+              onChange={(selectedOption) => {
+                console.log("Filter selected:", selectedOption);
+                filterRentals(selectedOption);
+              }}
+            />
+          </View>
           {loading ? (
             <View className="flex-1 justify-center items-center">
               <Text className="text-gray-500">Loading rentals...</Text>
@@ -167,12 +149,14 @@ export default function CustomerRentals() {
             </View>
           ) : (
             <View>
-              
               {rentals.map((rental, idx) => (
                 <Pressable
                   key={idx}
                   onPress={() => {
-                    console.log("Navigating to RentalDetails with data:", rental);
+                    console.log(
+                      "Navigating to RentalDetails with data:",
+                      rental
+                    );
                     router.push({
                       pathname: "/(screen)/RentalDetails",
                       params: {
@@ -224,10 +208,10 @@ export default function CustomerRentals() {
                   {/* Status and Duration */}
                   <View className="flex-row justify-between items-center">
                     <View
-                      className={`px-3 py-1 rounded-full ${getStatusColor(rental.retalStatus)}`}
+                      className={`px-3 py-1 rounded-full ${getStatusColor(rental.rentalStatus)}`}
                     >
                       <Text className="text-white text-xs font-medium">
-                        {rental.retalStatus || "Unknown"}
+                        {rental.rentalStatus || "Unknown"}
                       </Text>
                     </View>
                     <Text className="text-gray-400">
