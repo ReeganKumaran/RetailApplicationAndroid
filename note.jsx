@@ -16,8 +16,6 @@ export default function LoginScreen({ navigation }) {
   const [showPw, setShowPw] = useState(false);
 
   const onLogin = () => {
-    // TODO: call your API -> navigate on success
-    // navigation.replace("Home");
     console.log({ email, pw });
   };
 

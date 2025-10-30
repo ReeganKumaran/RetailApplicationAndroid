@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  Alert,
   Animated,
   Platform,
+  Pressable,
   ScrollView,
   Text,
   ToastAndroid,
@@ -13,12 +15,16 @@ import { postRental } from "../API/postApi";
 import { validateRentalForm } from "../helper/Validation";
 import DatePicker from "./DatePicker";
 
-export default function BasicDetails() {
+export default function BasicDetails({
+  customerData,
+  disableCustomerInformation = false,
+}) {
+  console.log("customerData In basicDetails:", customerData.customerName);
   const initialFormState = {
-    customer: "",
-    phoneNumber: "",
-    email: "",
-    aadhar: "",
+    customer: customerData.customerName || "",
+    phoneNumber: customerData.phoneNumber || "",
+    email: customerData.email || "",
+    aadhar: customerData.aadhar || "",
     itemDetail: {
       name: "",
       size: "",
@@ -46,7 +52,10 @@ export default function BasicDetails() {
   const [formData, setFormData] = useState(initialFormState);
 
   const validateForm = () => {
-    const { isValid, errors: newErrors } = validateRentalForm(formData, showDeliveryAddress);
+    const { isValid, errors: newErrors } = validateRentalForm(
+      formData,
+      showDeliveryAddress
+    );
     setErrors(newErrors);
     return isValid;
   };
@@ -65,8 +74,14 @@ export default function BasicDetails() {
   });
 
   const showToast = (message) => {
-    if (Platform.OS === 'android') {
-      ToastAndroid.show(message, ToastAndroid.SHORT);
+    if (Platform.OS === "android") {
+      ToastAndroid.showWithGravity(
+        message,
+        ToastAndroid.LONG,
+        ToastAndroid.CENTER
+      );
+    } else {
+      Alert.alert("Notice", message);
     }
   };
 
@@ -79,7 +94,7 @@ export default function BasicDetails() {
     try {
       const res = await postRental(formData);
       if (res.success) {
-        showToast('Rental added successfully! 📦');
+        showToast("Rental added successfully! 📦");
         // Reset form data to initial state
         setFormData(initialFormState);
         // Reset delivery address toggle
@@ -87,10 +102,10 @@ export default function BasicDetails() {
         // Clear any existing errors
         setErrors({});
       } else {
-        showToast(res.error || 'Failed to add rental');
+        showToast(res.error || "Failed to add rental");
       }
     } catch (error) {
-      showToast('An error occurred. Please try again.');
+      showToast("An error occurred. Please try again.");
       console.error(error);
     }
   };
@@ -107,22 +122,37 @@ export default function BasicDetails() {
             <Text className="font-semibold text-base text-gray-700 mb-2">
               Customer Name <Text className="text-red-500">*</Text>
             </Text>
-            <TextInput
-              className={`bg-gray-50 border ${errors.customer ? 'border-red-500' : 'border-gray-200'} rounded-lg p-3 text-black`}
-              placeholder="Enter Customer Name"
-              placeholderTextColor="#999"
-              autoCapitalize="words"
-              returnKeyType="next"
-              value={formData.customer}
-              onChangeText={(text) => {
-                setFormData({ ...formData, customer: text });
-                if (errors.customer) {
-                  setErrors({ ...errors, customer: '' });
-                }
+            <Pressable
+              onPress={() => {
+                showToast(
+                  "Customer information cannot be edited for existing customers"
+                );
               }}
-            />
+            >
+              <View pointerEvents="none">
+                <TextInput
+                  className={`bg-gray-50 border ${errors.customer ? "border-red-500" : "border-gray-200"} rounded-lg p-3 ${disableCustomerInformation ? "bg-gray-100" : ""} text-black`}
+                  placeholder="Enter Customer Name"
+                  placeholderTextColor="#999"
+                  autoCapitalize="words"
+                  returnKeyType="next"
+                  value={formData.customer}
+                  editable={!disableCustomerInformation}
+                  onChangeText={(text) => {
+                    if (!disableCustomerInformation) {
+                      setFormData({ ...formData, customer: text });
+                      if (errors.customer) {
+                        setErrors({ ...errors, customer: '' });
+                      }
+                    }
+                  }}
+                />
+              </View>
+            </Pressable>
             {errors.customer && (
-              <Text className="text-red-500 text-sm mt-1">{errors.customer}</Text>
+              <Text className="text-red-500 text-sm mt-1">
+                {errors.customer}
+              </Text>
             )}
           </View>
           <View className="flex-row gap-4">
@@ -130,33 +160,59 @@ export default function BasicDetails() {
               <Text className="font-semibold text-base text-gray-700 mb-2">
                 Phone Number <Text className="text-red-500">*</Text>
               </Text>
-              <TextInput
-                className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-black"
-                placeholder="Phone"
-                placeholderTextColor="#999"
-                keyboardType="phone-pad"
-                returnKeyType="next"
-                value={formData.phoneNumber}
-                onChangeText={(text) =>
-                  setFormData({ ...formData, phoneNumber: text })
-                }
-              />
+              <Pressable
+                onPress={() => {
+                  showToast(
+                    "Customer information cannot be edited for existing customers"
+                  );
+                }}
+              >
+                <View pointerEvents="none">
+                  <TextInput
+                    className={`bg-gray-50 border border-gray-200 rounded-lg p-3 ${disableCustomerInformation ? "bg-gray-100" : ""} text-black`}
+                    placeholder="Phone"
+                    placeholderTextColor="#999"
+                    keyboardType="phone-pad"
+                    returnKeyType="next"
+                    value={formData.phoneNumber}
+                    editable={!disableCustomerInformation}
+                    onChangeText={(text) => {
+                      if (!disableCustomerInformation) {
+                        setFormData({ ...formData, phoneNumber: text });
+                      }
+                    }}
+                  />
+                </View>
+              </Pressable>
             </View>
             <View className="bg-white rounded-xl p-4  flex-1">
               <Text className="font-semibold text-base text-gray-700 mb-2">
                 Email
               </Text>
-              <TextInput
-                className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-black"
-                placeholder="Email"
-                placeholderTextColor="#999"
-                keyboardType="email-address"
-                returnKeyType="next"
-                value={formData.email}
-                onChangeText={(text) =>
-                  setFormData({ ...formData, email: text })
-                }
-              />
+              <Pressable
+                onPress={() => {
+                  showToast(
+                    "Customer information cannot be edited for existing customers"
+                  );
+                }}
+              >
+                <View pointerEvents="none">
+                  <TextInput
+                    className={`bg-gray-50 border border-gray-200 rounded-lg p-3 ${disableCustomerInformation ? "bg-gray-100" : ""} text-black`}
+                    placeholder="Email"
+                    placeholderTextColor="#999"
+                    keyboardType="email-address"
+                    returnKeyType="next"
+                    value={formData.email}
+                    editable={!disableCustomerInformation}
+                    onChangeText={(text) => {
+                      if (!disableCustomerInformation) {
+                        setFormData({ ...formData, email: text });
+                      }
+                    }}
+                  />
+                </View>
+              </Pressable>
             </View>
           </View>
         </View>
@@ -258,7 +314,10 @@ export default function BasicDetails() {
                 onChangeText={(text) =>
                   setFormData({
                     ...formData,
-                    itemDetail: { ...formData.itemDetail, advanceAmount: parseInt(text) || 0 },
+                    itemDetail: {
+                      ...formData.itemDetail,
+                      advanceAmount: parseInt(text) || 0,
+                    },
                   })
                 }
               />

@@ -63,7 +63,6 @@ export default function SignUp() {
           // else if (!validatePassword(form.password))
           //   throw new Error("Invalid password format");
           else {
-            console.log(form);
             await setError("");
             const res = await verifyOTP(form.email, form.otp);
             if (res.success == true) {
@@ -78,9 +77,6 @@ export default function SignUp() {
         }
       }
   };
-  useEffect(() => {
-    console.log(error, form);
-  }, [error]);
   return (
     <GestureHandlerRootView className="flex-1 ">
       <SafeAreaProvider>

@@ -1,9 +1,9 @@
 import api from "./api";
-export const getRental = async ({clientId, option, limit = 10, page = 1 }) => {
+export const getRental = async ({customerId, option, limit = 10, page = 1 }) => {
   try {
     const response = await api.get("/rentals", {
       params: {
-        clientId,
+        customerId,
         rentalStatus: option,
         limit,
         page,

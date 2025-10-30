@@ -62,7 +62,6 @@ const barData = {
 };
 
 const handleAddClient = () => {
-  console.log("Hello");
   router.push("/(screen)/AddClient");
 };
 
@@ -156,9 +155,6 @@ export default function Dashboard() {
       setLoading(false);
     }
   };
-  useEffect(() => {
-    console.log("rental" + JSON.stringify(rental));
-  }, [rental]);
 
   return (
     <GestureHandlerRootView className="flex-1">

@@ -1,36 +1,29 @@
-import React, { useEffect, useState } from "react";
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Text,
-  TouchableOpacity,
-  View,
-  TextInput,
-} from "react-native";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { useLocalSearchParams } from "expo-router";
+import { useEffect, useState } from "react";
+import { KeyboardAvoidingView, Platform, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import {
   SafeAreaProvider,
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { Plus } from "lucide-react-native";
-import { router } from "expo-router";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from "react-native-reanimated";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import AdvanceDetails from "../../src/Component/AdvanceDetails";
 import BasicDetails from "../../src/Component/BasicDetails";
 import SegmentedToggle from "../../src/Component/SegmentedToggle";
-import AdvanceDetails from "../../src/Component/AdvanceDetails";
 
 export default function AddClient() {
   const [basicAdvanceToggle, setBasicAdvanceToggle] = useState("Basic");
   const rotation = useSharedValue(0);
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
+  const [editMode, setEditMode] = useState(false);
   useEffect(() => {
     rotation.value = withTiming(45, { duration: 1000 });
   }, []);
@@ -38,7 +31,11 @@ export default function AddClient() {
     transform: [{ rotate: `${rotation.value}deg` }],
   }));
   const fabBottom = Math.max(insets.bottom, 12) + tabBarHeight + 8;
-
+  // Get route params
+  const { customerId, customerName, customerData, disableEdit } =
+    useLocalSearchParams();
+    console.log("customerData:", disableEdit);
+  
   return (
     <GestureHandlerRootView className="flex-1  ">
       <SafeAreaProvider>
@@ -60,7 +57,7 @@ export default function AddClient() {
               keyboardOpeningTime={0}
               keyboardShouldPersistTaps="handled"
               scrollToOverflowEnabled
-              className='bg-gray-50'
+              className="bg-gray-50"
             >
               <View className="p-[16px]">
                 <SegmentedToggle
@@ -71,7 +68,7 @@ export default function AddClient() {
               </View>
               <View className="h-4" />
               {basicAdvanceToggle === "Basic" ? (
-                <BasicDetails />
+                <BasicDetails customerData={JSON.parse(customerData)} disableCustomerInformation={disableEdit} />
               ) : (
                 <AdvanceDetails />
               )}

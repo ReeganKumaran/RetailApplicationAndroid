@@ -20,16 +20,12 @@ export default function Login({ setIsNewUser }) {
     setError("");
     try {
       if (!validateEmail(email)) {
-        console.log("If Login pressed with:", email, password);
         throw new Error("Invalid email format");
       } else if (!validatePassword(password)) {
-        console.log("else if Login pressed with:", email, password);
         throw new Error("Invalid password format");
       } else {
-        console.log("else Login pressed with:", email, password);
 
         const res = await getLogin(email, password);
-        console.log("Login response jsx:", JSON.stringify(res));
         if (res.statusCode === 200) router.push("/Dashboard");
         else throw new Error(res.message || "Login failed");
       }

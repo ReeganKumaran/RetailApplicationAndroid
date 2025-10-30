@@ -1,21 +1,21 @@
-import { View, Text, ScrollView, Pressable } from "react-native";
-import React, { useState, useCallback } from "react";
-import { useLocalSearchParams, router } from "expo-router";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import Header from "../../src/Component/Header";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
+import { router, useLocalSearchParams } from "expo-router";
+import { Edit, IndianRupee } from "lucide-react-native";
+import { useCallback, useState } from "react";
+import { Pressable, ScrollView, Text, View } from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { getRental } from "../../src/API/getApi";
-import { IndianRupee } from "lucide-react-native";
 import SegmentedToggle from "../../src/Component/SegmentedToggle";
 import { formatDate, getStatusColor } from "../../src/utils/Formater";
+import { hide } from "expo-splash-screen";
 
 export default function CustomerRentals() {
   const params = useLocalSearchParams();
   const [rentals, setRentals] = useState([]);
   const [allRentals, setAllRentals] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedFilter, setSelectedFilter] = useState("All");
+  const [selectedFilter, setSelectedFilter] = useState(null);
 
   const customerId = params.customerId;
   const customerName = params.customerName;
@@ -23,23 +23,15 @@ export default function CustomerRentals() {
     ? JSON.parse(params.customerData)
     : null;
 
-  console.log("CustomerRentals params:", params);
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchCustomerRentals();
-    }, [customerId])
-  );
-
-  const fetchCustomerRentals = async () => {
+  const fetchCustomerRentals = async ({ option }) => {
     try {
       setLoading(true);
       const response = await getRental({
-        clientId: customerId,
+        option,
+        customerId,
         limit: null,
         page: null,
       });
-      console.log("All rentals response:", response);
 
       // Filter rentals for this specific customer
       const customerRentals =
@@ -51,7 +43,6 @@ export default function CustomerRentals() {
           );
         }) || [];
 
-      console.log("Filtered customer rentals:", customerRentals);
       setAllRentals(customerRentals);
       setRentals(customerRentals); // Initially show all rentals
     } catch (error) {
@@ -61,16 +52,26 @@ export default function CustomerRentals() {
     }
   };
 
-  const filterRentals = (status) => {
-    setSelectedFilter(status);
-    if (status === "All") {
-      setRentals(allRentals);
-    } else {
-      const filteredRentals = allRentals.filter((rental) => {
-        return rental.retalStatus === status;
-      });
-      setRentals(filteredRentals);
-    }
+  useFocusEffect(
+    useCallback(() => {
+      const loadData = async () => {
+        await fetchCustomerRentals({});
+      };
+      loadData();
+    }, [customerId])
+  );
+
+  const filterRentals = async (status) => {
+    if (status === "All") fetchCustomerRentals({ option: null });
+    else await fetchCustomerRentals({ option: status });
+    // if (status === "All") {
+    //   setRentals(allRentals);
+    // } else {
+    //   const filteredRentals = allRentals.filter((rental) => {
+    //     return rental.retalStatus === status;
+    //   });
+    //   setRentals(filteredRentals);
+    // }
   };
 
   return (
@@ -90,9 +91,24 @@ export default function CustomerRentals() {
         <ScrollView className="flex-1 px-4 py-4">
           {customerData && (
             <View className="my-4 bg-gray-950 rounded-lg p-4">
-              <Text className="text-white text-lg font-bold mb-2">
-                Customer Summary
-              </Text>
+              <View className="flex-row justify-between mb-2">
+                <Text className="text-white text-lg font-bold mb-2">
+                  Customer Summary
+                </Text>
+                <Pressable className="bg-blue-500 rounded-full px-4 py-2" onPress={() => { 
+                  router.push({
+                    pathname: "/(screen)/AddClient",
+                    params: {
+                      customerId: customerId,
+                      customerName: customerName,
+                      customerData: params.customerData,
+                      disableEdit: false,
+                    },
+                  });
+                }}>
+                  <Text className="text-white">Add Rental</Text>
+                </Pressable>
+              </View>
               <View className="flex-row justify-between mb-2">
                 <Text className="text-gray-400">Total Rentals:</Text>
                 <Text className="text-white font-medium">
@@ -132,7 +148,6 @@ export default function CustomerRentals() {
             <SegmentedToggle
               options={["All", "Pending", "Returned"]}
               onChange={(selectedOption) => {
-                console.log("Filter selected:", selectedOption);
                 filterRentals(selectedOption);
               }}
             />
