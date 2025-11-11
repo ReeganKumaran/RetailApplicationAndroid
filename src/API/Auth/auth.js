@@ -39,7 +39,7 @@ export const getSignUp = async ({name, email, password}) => {
     });
     return response.data;
   } catch (error) {
-    throw new Error (error.message || "Sign Up error");
+    throw new Error (error.response?.data?.message || "Sign Up error");
   }
 };
 

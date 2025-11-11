@@ -1,11 +1,11 @@
-const URLOption = 2;
+const URLOption = 1;
 
 export const baseURL = () => {
   switch (URLOption) {
     case 1:
-      return "http://192.168.56.1:5000";
+      return "https://retailapplication-30d9.onrender.com";
     case 2:
-      return "http://10.177.201.42:5000"; // not in working condition
+      return "http://10.31.146.42:5000"; // not in working condition
     default:
       return "http://localhost:5000"; // not in working condition
   }

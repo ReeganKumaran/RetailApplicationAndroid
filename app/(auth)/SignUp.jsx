@@ -65,7 +65,7 @@ export default function SignUp() {
           else {
             await setError("");
             const res = await verifyOTP(form.email, form.otp);
-            if (res.success == true) {
+            if (res.success === true) {
               setSubmit(false);
               router.push("../(screen)/Dashboard");
             }
