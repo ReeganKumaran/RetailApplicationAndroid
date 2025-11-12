@@ -35,6 +35,9 @@ export default function AddClient() {
   const { customerId, customerName, customerData, disableEdit } =
     useLocalSearchParams();
     console.log("customerData:", disableEdit);
+
+  // Safely parse customerData
+  const parsedCustomerData = customerData ? JSON.parse(customerData) : null;
   
   return (
     <GestureHandlerRootView className="flex-1  ">
@@ -68,7 +71,7 @@ export default function AddClient() {
               </View>
               <View className="h-4" />
               {basicAdvanceToggle === "Basic" ? (
-                <BasicDetails customerData={JSON.parse(customerData)} disableCustomerInformation={disableEdit} />
+                <BasicDetails customerData={parsedCustomerData} disableCustomerInformation={disableEdit} />
               ) : (
                 <AdvanceDetails />
               )}

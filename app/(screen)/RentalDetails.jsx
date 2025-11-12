@@ -1,9 +1,9 @@
 import { View, Text, ScrollView, Pressable } from "react-native";
-import React from "react";
 import { useLocalSearchParams, router } from "expo-router";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import Header from "../../src/Component/Header";
 import { Ionicons } from "@expo/vector-icons";
+import { UserPen } from "lucide-react-native";
 
 export default function RentalDetails() {
   const params = useLocalSearchParams();
@@ -24,8 +24,8 @@ export default function RentalDetails() {
     }
   }
 
-  console.log("RentalDetails params:", params);
-  console.log("RentalDetails rental:", rental);
+  // console.log("RentalDetails params:", params);
+  // console.log("RentalDetails rental:", rental);
 
   if (!rental) {
     return (
@@ -53,7 +53,16 @@ export default function RentalDetails() {
       minute: "2-digit",
     });
   };
-
+  
+  const handleEditPress = () => {
+    router.push({
+      pathname: "/(screen)/AddClient",
+      params: {
+        rental: JSON.stringify(rental),
+        editMode: "true",
+      },
+    });
+  };
   return (
     <SafeAreaProvider>
       <SafeAreaView className="flex-1 bg-white ">
@@ -67,9 +76,15 @@ export default function RentalDetails() {
         <ScrollView className="flex-1 px-4 py-4">
           {/* Customer Info Card */}
           <View className="bg-gray-950 rounded-lg p-4 mb-4">
-            <Text className="text-white text-lg font-bold mb-2">
-              Customer Information
-            </Text>
+            <View className="flex-row justify-between items-center mb-4">
+              <Text className="text-white text-lg font-bold mb-2">
+                Customer Information
+              </Text>
+              <UserPen color="white" size={20} />
+              {/* <Text className="text-2xl font-bold text-white"> */}
+              {/* <SquarePen className="text-white" /> */}
+              {/* </Text> */}
+            </View>
             <View className="space-y-2">
               <View className="flex-row justify-between">
                 <Text className="text-gray-400">Name</Text>
@@ -152,10 +167,10 @@ export default function RentalDetails() {
               <View className="flex-row justify-between">
                 <Text className="text-gray-400">Status</Text>
                 <View
-                  className={`px-3 py-1 rounded-full ${rental.retalStatus === "Pending" ? "bg-yellow-600" : "bg-green-600"}`}
+                  className={`px-3 py-1 rounded-full ${rental.rentalStatus === "Pending" ? "bg-yellow-600" : "bg-green-600"}`}
                 >
                   <Text className="text-white text-xs font-medium">
-                    {rental.retalStatus || "N/A"}
+                    {rental.rentalStatus || "N/A"}
                   </Text>
                 </View>
               </View>

@@ -19,22 +19,22 @@ export default function BasicDetails({
   customerData,
   disableCustomerInformation = false,
 }) {
-  console.log("customerData In basicDetails:", customerData.customerName);
+  console.log("customerData In basicDetails:", customerData?.customerName);
   const initialFormState = {
-    customer: customerData.customerName || "",
-    phoneNumber: customerData.phoneNumber || "",
-    email: customerData.email || "",
-    aadhar: customerData.aadhar || "",
+    customer: customerData?.customerName || "Reegan",
+    phoneNumber: customerData?.phoneNumber || "9344567890",
+    email: customerData?.email || "reegan@example.com",
+    aadhar: customerData?.aadhar || "23456 7890 1234",
     itemDetail: {
-      name: "",
-      size: "",
-      price: "",
-      quantity: "",
-      advanceAmount: "",
+      name: "Party Wear Suit",
+      size: "3x2",
+      price: "40",
+      quantity: "100",
+      advanceAmount: "200",
     },
     deliveryDate: "",
     returnDate: "",
-    notes: "",
+    notes: "test notes",
     deliveryAddress: {
       street: "",
       city: "",
@@ -86,13 +86,19 @@ export default function BasicDetails({
   };
 
   const handleSubmission = async () => {
+    console.log("handleSubmission called");
+    console.log("Form data:", JSON.stringify(formData, null, 2));
+
     // if (!validateForm()) {
     //   showToast('Please fill in all required fields correctly');
     //   return;
     // }
 
     try {
+      console.log("Calling postRental API...");
       const res = await postRental(formData);
+      console.log("postRental response:", JSON.stringify(res, null, 2));
+
       if (res.success) {
         showToast("Rental added successfully! 📦");
         // Reset form data to initial state
@@ -102,11 +108,12 @@ export default function BasicDetails({
         // Clear any existing errors
         setErrors({});
       } else {
+        console.log("Submission failed:", res.error);
         showToast(res.error || "Failed to add rental");
       }
     } catch (error) {
+      console.error("Error in handleSubmission:", error);
       showToast("An error occurred. Please try again.");
-      console.error(error);
     }
   };
 
@@ -142,7 +149,7 @@ export default function BasicDetails({
                     if (!disableCustomerInformation) {
                       setFormData({ ...formData, customer: text });
                       if (errors.customer) {
-                        setErrors({ ...errors, customer: '' });
+                        setErrors({ ...errors, customer: "" });
                       }
                     }
                   }}
@@ -545,6 +552,7 @@ export default function BasicDetails({
           )}
           <TouchableOpacity
             onPress={() => {
+              console.log("postRental response:");
               handleSubmission();
             }}
           >
