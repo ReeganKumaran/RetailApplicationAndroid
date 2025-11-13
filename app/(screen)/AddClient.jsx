@@ -23,7 +23,7 @@ export default function AddClient() {
   const rotation = useSharedValue(0);
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
-  const [editMode, setEditMode] = useState(false);
+
   useEffect(() => {
     rotation.value = withTiming(45, { duration: 1000 });
   }, []);
@@ -31,13 +31,33 @@ export default function AddClient() {
     transform: [{ rotate: `${rotation.value}deg` }],
   }));
   const fabBottom = Math.max(insets.bottom, 12) + tabBarHeight + 8;
-  // Get route params
-  const { customerId, customerName, customerData, disableEdit } =
-    useLocalSearchParams();
-    console.log("customerData:", disableEdit);
 
-  // Safely parse customerData
-  const parsedCustomerData = customerData ? JSON.parse(customerData) : null;
+  // Get route params
+  const { customerId, customerName, customerData, disableEdit, rental, editMode: isEditMode } =
+    useLocalSearchParams();
+
+  console.log("customerData:", disableEdit);
+  console.log("rental data:", rental);
+  console.log("isEditMode:", isEditMode);
+
+  // Safely parse customerData or rental data
+  let parsedCustomerData = null;
+  let parsedRentalData = null;
+
+  if (rental) {
+    try {
+      parsedRentalData = JSON.parse(rental);
+      console.log("Parsed rental data:", parsedRentalData);
+    } catch (e) {
+      console.error("Error parsing rental data:", e);
+    }
+  } else if (customerData) {
+    try {
+      parsedCustomerData = JSON.parse(customerData);
+    } catch (e) {
+      console.error("Error parsing customer data:", e);
+    }
+  }
   
   return (
     <GestureHandlerRootView className="flex-1  ">
@@ -71,7 +91,12 @@ export default function AddClient() {
               </View>
               <View className="h-4" />
               {basicAdvanceToggle === "Basic" ? (
-                <BasicDetails customerData={parsedCustomerData} disableCustomerInformation={disableEdit} />
+                <BasicDetails
+                  customerData={parsedCustomerData}
+                  rentalData={parsedRentalData}
+                  disableCustomerInformation={disableEdit}
+                  isEditMode={isEditMode === "true"}
+                />
               ) : (
                 <AdvanceDetails />
               )}

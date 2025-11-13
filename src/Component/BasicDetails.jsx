@@ -11,38 +11,46 @@ import {
   View,
 } from "react-native";
 import { TextInput } from "react-native-gesture-handler";
-import { postRental } from "../API/postApi";
+import { postRental, updateRental } from "../API/postApi";
 import { validateRentalForm } from "../helper/Validation";
 import DatePicker from "./DatePicker";
 
 export default function BasicDetails({
   customerData,
+  rentalData,
   disableCustomerInformation = false,
+  isEditMode = false,
 }) {
   console.log("customerData In basicDetails:", customerData?.customerName);
+  console.log("rentalData In basicDetails:", rentalData);
+  console.log("isEditMode:", isEditMode);
+
+  // Use rentalData if available (edit mode), otherwise use customerData
+  const dataSource = rentalData || customerData;
+
   const initialFormState = {
-    customer: customerData?.customerName || "Reegan",
-    phoneNumber: customerData?.phoneNumber || "9344567890",
-    email: customerData?.email || "reegan@example.com",
-    aadhar: customerData?.aadhar || "23456 7890 1234",
+    customer: dataSource?.customer || dataSource?.customerName || "Reegan",
+    phoneNumber: dataSource?.clientPhoneNumber || dataSource?.phoneNumber || dataSource?.customerDetail?.customerPhone || "9344567890",
+    email: dataSource?.clientEmail || dataSource?.email || dataSource?.customerDetail?.customerEmail || "reegan@example.com",
+    aadhar: dataSource?.clientAadhaar || dataSource?.aadhar || dataSource?.customerDetail?.customerAadhar || "23456 7890 1234",
     itemDetail: {
-      name: "Party Wear Suit",
-      size: "3x2",
-      price: "40",
-      quantity: "100",
-      advanceAmount: "200",
+      name: dataSource?.itemDetail?.name || "Party Wear Suit",
+      size: dataSource?.itemDetail?.size || "3x2",
+      price: dataSource?.itemDetail?.price?.toString() || "40",
+      quantity: dataSource?.itemDetail?.quantity?.toString() || "100",
+      advanceAmount: dataSource?.itemDetail?.advanceAmount?.toString() || "200",
     },
-    deliveryDate: "",
-    returnDate: "",
-    notes: "test notes",
+    deliveryDate: dataSource?.deliveryDate || "",
+    returnDate: dataSource?.returnDate || "",
+    notes: dataSource?.notes || "test notes",
     deliveryAddress: {
-      street: "",
-      city: "",
-      state: "",
-      postalCode: "",
-      country: "",
-      landmark: "",
-      isPrimary: true,
+      street: dataSource?.deliveryAddress?.street || "",
+      city: dataSource?.deliveryAddress?.city || "",
+      state: dataSource?.deliveryAddress?.state || "",
+      postalCode: dataSource?.deliveryAddress?.postalCode || "",
+      country: dataSource?.deliveryAddress?.country || "",
+      landmark: dataSource?.deliveryAddress?.landmark || "",
+      isPrimary: dataSource?.deliveryAddress?.isPrimary ?? true,
     },
   };
 
@@ -88,6 +96,8 @@ export default function BasicDetails({
   const handleSubmission = async () => {
     console.log("handleSubmission called");
     console.log("Form data:", JSON.stringify(formData, null, 2));
+    console.log("isEditMode:", isEditMode);
+    console.log("rentalData._id:", rentalData?._id);
 
     // if (!validateForm()) {
     //   showToast('Please fill in all required fields correctly');
@@ -95,21 +105,32 @@ export default function BasicDetails({
     // }
 
     try {
-      console.log("Calling postRental API...");
-      const res = await postRental(formData);
-      console.log("postRental response:", JSON.stringify(res, null, 2));
+      let res;
+
+      if (isEditMode && rentalData?._id) {
+        // Update existing rental
+        console.log("Calling updateRental API...");
+        res = await updateRental(rentalData._id, formData);
+        console.log("updateRental response:", JSON.stringify(res, null, 2));
+      } else {
+        // Create new rental
+        console.log("Calling postRental API...");
+        res = await postRental(formData);
+        console.log("postRental response:", JSON.stringify(res, null, 2));
+      }
 
       if (res.success) {
-        showToast("Rental added successfully! 📦");
-        // Reset form data to initial state
-        setFormData(initialFormState);
-        // Reset delivery address toggle
-        setShowDeliveryAddress(false);
-        // Clear any existing errors
-        setErrors({});
+        showToast(isEditMode ? "Rental updated successfully! ✅" : "Rental added successfully! 📦");
+
+        if (!isEditMode) {
+          // Only reset form for new rentals, not for updates
+          setFormData(initialFormState);
+          setShowDeliveryAddress(false);
+          setErrors({});
+        }
       } else {
         console.log("Submission failed:", res.error);
-        showToast(res.error || "Failed to add rental");
+        showToast(res.error || (isEditMode ? "Failed to update rental" : "Failed to add rental"));
       }
     } catch (error) {
       console.error("Error in handleSubmission:", error);
@@ -552,12 +573,14 @@ export default function BasicDetails({
           )}
           <TouchableOpacity
             onPress={() => {
-              console.log("postRental response:");
+              console.log(isEditMode ? "Update rental" : "Create rental");
               handleSubmission();
             }}
           >
             <View className="px-2 py-3 mt-10 bg-black rounded-xl flex flex-row justify-center">
-              <Text className="text-white font-bold text-lg">Submit</Text>
+              <Text className="text-white font-bold text-lg">
+                {isEditMode ? "Update" : "Submit"}
+              </Text>
             </View>
           </TouchableOpacity>
         </View>

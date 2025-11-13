@@ -80,7 +80,9 @@ export default function RentalDetails() {
               <Text className="text-white text-lg font-bold mb-2">
                 Customer Information
               </Text>
-              <UserPen color="white" size={20} />
+              <Pressable onPress={handleEditPress}>
+                <UserPen color="white" size={20} />
+              </Pressable>
               {/* <Text className="text-2xl font-bold text-white"> */}
               {/* <SquarePen className="text-white" /> */}
               {/* </Text> */}
