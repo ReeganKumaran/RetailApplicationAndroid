@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { router, useLocalSearchParams } from "expo-router";
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import {
   Edit,
   EllipsisVertical,
@@ -8,7 +9,14 @@ import {
   Scroll,
 } from "lucide-react-native";
 import { useCallback, useRef, useState } from "react";
-import { Animated, Pressable, ScrollView, Text, View, Easing  } from "react-native";
+import {
+  Animated,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+  Easing,
+} from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { getRental } from "../../src/API/getApi";
 import SegmentedToggle from "../../src/Component/SegmentedToggle";
@@ -23,6 +31,8 @@ export default function CustomerRentals() {
   const [loading, setLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState(null);
   const [showMenu, setShowMenu] = useState(false);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedRentals, setSelectedRentals] = useState([]);
   const customerId = params.customerId;
   const customerName = params.customerName;
 
@@ -137,38 +147,101 @@ export default function CustomerRentals() {
   const filterRentals = async (status) => {
     if (status === "All") fetchCustomerRentals({ option: null });
     else await fetchCustomerRentals({ option: status });
-    // if (status === "All") {
-    //   setRentals(allRentals);
-    // } else {
-    //   const filteredRentals = allRentals.filter((rental) => {
-    //     return rental.retalStatus === status;
-    //   });
-    //   setRentals(filteredRentals);
-    // }
   };
 
-  // const toggleMenu = () => {
-  //   setShowMenu(!showMenu);
-  // };
+  // Handle long press to enter selection mode
+  const handleLongPress = (rental) => {
+    setSelectionMode(true);
+    setSelectedRentals([rental._id]);
+  };
+
+  // Handle tap in selection mode
+  const handleSelectToggle = (rentalId) => {
+    if (selectedRentals.includes(rentalId)) {
+      const newSelection = selectedRentals.filter((id) => id !== rentalId);
+      setSelectedRentals(newSelection);
+
+      // Exit selection mode if no items selected
+      if (newSelection.length === 0) {
+        setSelectionMode(false);
+      }
+    } else {
+      setSelectedRentals([...selectedRentals, rentalId]);
+    }
+  };
+
+  // Handle normal press
+  const handlePress = (rental) => {
+    if (selectionMode) {
+      handleSelectToggle(rental._id);
+    } else {
+      router.push({
+        pathname: "/(screen)/RentalDetails",
+        params: {
+          data: encodeURIComponent(JSON.stringify(rental)),
+        },
+      });
+    }
+  };
+
+  // Cancel selection mode
+  const cancelSelection = () => {
+    setSelectionMode(false);
+    setSelectedRentals([]);
+  };
+
+  // Select all rentals
+  const selectAll = () => {
+    setSelectedRentals(rentals.map((r) => r._id));
+  };
   return (
     <SafeAreaProvider>
       <SafeAreaView className="flex-1 bg-white ">
         <View
           className="flex-row items-center justify-between p-4 border-b border-gray-200 z-50"
-          style={{ position: "relative" }} // anchor absolute children
+          style={{
+            position: "relative",
+            backgroundColor: selectionMode ? "#b9b9b9ff" : "white",
+          }}
         >
-          <View className="flex-row items-center flex-1">
-            <Pressable onPress={() => router.back()}>
-              <Ionicons name="arrow-back" size={24} color="#000" />
-            </Pressable>
-            <Text className="text-xl font-bold ml-4">
-              {customerName} - Rentals
-            </Text>
-          </View>
+          {selectionMode ? (
+            // Selection Mode Header
+            <>
+              <View className="flex-row items-center flex-1">
+                <Pressable onPress={cancelSelection}>
+                  <Ionicons name="close" size={24} color="#383838ff" />
+                </Pressable>
+                <Text className="text-xl font-bold ml-4 text-[#383838ff]">
+                  {selectedRentals.length} selected
+                </Text>
+              </View>
 
-          <Pressable className="mr-3" onPress={toggleMenu} hitSlop={12}>
-            <EllipsisVertical color="#000" size={24} />
-          </Pressable>
+              <View className="flex-row gap-4">
+                <Pressable onPress={selectAll} hitSlop={12}>
+                  <FontAwesome6 name="file-invoice" size={23} color="black" />
+                </Pressable>
+                <Pressable onPress={toggleMenu} hitSlop={12}>
+                  <EllipsisVertical color="#383838ff" size={24} />
+                </Pressable>
+              </View>
+            </>
+          ) : (
+            // Normal Header
+            <>
+              <View className="flex-row items-center flex-1">
+                <Pressable onPress={() => router.back()}>
+                  <Ionicons name="arrow-back" size={24} color="#000" />
+                </Pressable>
+                <Text className="text-xl font-bold ml-4">
+                  {customerName} - Rentals
+                </Text>
+              </View>
+
+              <Pressable className="mr-3" onPress={toggleMenu} hitSlop={12}>
+                <EllipsisVertical color="#000" size={24} />
+              </Pressable>
+            </>
+          )}
 
           {/* Backdrop only while visible */}
           {showMenu && (
@@ -325,102 +398,119 @@ export default function CustomerRentals() {
             </View>
           ) : (
             <View>
-              {rentals.map((rental, idx) => (
-                <Pressable
-                  key={idx}
-                  onPress={() => {
-                    console.log(
-                      "Navigating to RentalDetails with data:",
-                      rental
-                    );
-                    router.push({
-                      pathname: "/(screen)/RentalDetails",
-                      params: {
-                        data: encodeURIComponent(JSON.stringify(rental)),
-                      },
-                    });
-                  }}
-                  className="bg-gray-950 rounded-lg p-4 mb-4 active:opacity-80"
-                >
-                  {/* Header with Item Name and Price */}
-                  <View className="flex-row justify-between items-center mb-3">
-                    <Text className="text-white text-lg font-bold flex-1">
-                      {rental.itemDetail?.name || rental.name || "Item"}
-                    </Text>
-                    <View className="flex-row items-center">
-                      <IndianRupee color="#ffffff" size={16} />
-                      <Text className="text-white text-lg font-bold ml-1">
-                        {rental.itemDetail?.totalPrice || rental.totalRent || 0}
+              {rentals.map((rental, idx) => {
+                const isSelected = selectedRentals.includes(rental._id);
+                return (
+                  <Pressable
+                    key={idx}
+                    onPress={() => handlePress(rental)}
+                    onLongPress={() => handleLongPress(rental)}
+                    className={`rounded-lg p-4 mb-4 active:opacity-80 ${
+                      isSelected ? "bg-gray-600" : "bg-gray-950"
+                    }`}
+                    style={{
+                      borderWidth: isSelected ? 2 : 0,
+                      borderColor: isSelected ? "#525252ff" : "transparent",
+                    }}
+                  >
+                    {/* Header with Item Name and Price */}
+                    <View className="flex-row justify-between items-center mb-3">
+                      {selectionMode && (
+                        <View
+                          className={`w-6 h-6 rounded-full mr-3 items-center justify-center ${
+                            isSelected ? "bg-white" : "border-2 border-white"
+                          }`}
+                        >
+                          {isSelected && (
+                            <Ionicons
+                              name="checkmark"
+                              size={18}
+                              color="#b9b9b9ff"
+                            />
+                          )}
+                        </View>
+                      )}
+                      <Text className="text-white text-lg font-bold flex-1">
+                        {rental.itemDetail?.name || rental.name || "Item"}
                       </Text>
-                    </View>
-                  </View>
-
-                  {/* Item Details */}
-                  <View className="flex-row justify-between mb-2">
-                    <Text className="text-gray-400">Size & Quantity:</Text>
-                    <Text className="text-white">
-                      {rental.itemDetail?.size || rental.size} ×{" "}
-                      {rental.itemDetail?.quantity || rental.quantity}
-                    </Text>
-                  </View>
-
-                  {/* Dates */}
-                  <View className="flex-row justify-between mb-2">
-                    <Text className="text-gray-400">Delivery:</Text>
-                    <Text className="text-white">
-                      {formatDate(rental.deliveryDate)}
-                    </Text>
-                  </View>
-
-                  {rental.returnDate && (
-                    <View className="flex-row justify-between mb-2">
-                      <Text className="text-gray-400">Return:</Text>
-                      <Text className="text-white">
-                        {formatDate(rental.returnDate)}
-                      </Text>
-                    </View>
-                  )}
-
-                  {/* Status and Duration */}
-                  <View className="flex-row justify-between items-center">
-                    <View
-                      className={`px-3 py-1 rounded-full ${getStatusColor(rental.rentalStatus)}`}
-                    >
-                      <Text className="text-white text-xs font-medium">
-                        {rental.rentalStatus || "Unknown"}
-                      </Text>
-                    </View>
-                    <Text className="text-gray-400">
-                      {rental.totalDays || 1} days
-                    </Text>
-                  </View>
-
-                  {/* Advance Payment Info */}
-                  {rental.itemDetail?.advanceAmount > 0 && (
-                    <View className="mt-2 pt-2 border-t border-gray-700">
-                      <View className="flex-row justify-between">
-                        <Text className="text-green-400 text-sm">
-                          Advance Paid: ₹{rental.itemDetail.advanceAmount}
-                        </Text>
-                        <Text className="text-orange-400 text-sm">
-                          Remaining: ₹
-                          {(rental.itemDetail.totalPrice || rental.totalRent) -
-                            rental.itemDetail.advanceAmount}
+                      <View className="flex-row items-center">
+                        <IndianRupee color="#ffffff" size={16} />
+                        <Text className="text-white text-lg font-bold ml-1">
+                          {rental.itemDetail?.totalPrice ||
+                            rental.totalRent ||
+                            0}
                         </Text>
                       </View>
                     </View>
-                  )}
 
-                  {/* Notes */}
-                  {rental.notes && (
-                    <View className="mt-2 pt-2 border-t border-gray-700">
-                      <Text className="text-gray-400 text-sm italic">
-                        {rental.notes}
+                    {/* Item Details */}
+                    <View className="flex-row justify-between mb-2">
+                      <Text className="text-gray-400">Size & Quantity:</Text>
+                      <Text className="text-white">
+                        {rental.itemDetail?.size || rental.size} ×{" "}
+                        {rental.itemDetail?.quantity || rental.quantity}
                       </Text>
                     </View>
-                  )}
-                </Pressable>
-              ))}
+
+                    {/* Dates */}
+                    <View className="flex-row justify-between mb-2">
+                      <Text className="text-gray-400">Delivery:</Text>
+                      <Text className="text-white">
+                        {formatDate(rental.deliveryDate)}
+                      </Text>
+                    </View>
+
+                    {rental.returnDate && (
+                      <View className="flex-row justify-between mb-2">
+                        <Text className="text-gray-400">Return:</Text>
+                        <Text className="text-white">
+                          {formatDate(rental.returnDate)}
+                        </Text>
+                      </View>
+                    )}
+
+                    {/* Status and Duration */}
+                    <View className="flex-row justify-between items-center">
+                      <View
+                        className={`px-3 py-1 rounded-full ${getStatusColor(rental.rentalStatus)}`}
+                      >
+                        <Text className="text-white text-xs font-medium">
+                          {rental.rentalStatus || "Unknown"}
+                        </Text>
+                      </View>
+                      <Text className="text-gray-400">
+                        {rental.totalDays || 1} days
+                      </Text>
+                    </View>
+
+                    {/* Advance Payment Info */}
+                    {rental.itemDetail?.advanceAmount > 0 && (
+                      <View className="mt-2 pt-2 border-t border-gray-700">
+                        <View className="flex-row justify-between">
+                          <Text className="text-green-400 text-sm">
+                            Advance Paid: ₹{rental.itemDetail.advanceAmount}
+                          </Text>
+                          <Text className="text-orange-400 text-sm">
+                            Remaining: ₹
+                            {(rental.itemDetail.totalPrice ||
+                              rental.totalRent) -
+                              rental.itemDetail.advanceAmount}
+                          </Text>
+                        </View>
+                      </View>
+                    )}
+
+                    {/* Notes */}
+                    {rental.notes && (
+                      <View className="mt-2 pt-2 border-t border-gray-700">
+                        <Text className="text-gray-400 text-sm italic">
+                          {rental.notes}
+                        </Text>
+                      </View>
+                    )}
+                  </Pressable>
+                );
+              })}
             </View>
           )}
         </ScrollView>
