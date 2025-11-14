@@ -38,16 +38,13 @@ export default function EditRental() {
   const params = useLocalSearchParams();
   const { rental } = params;
 
-  console.log("EditRental params:", params);
-
   // Parse rental data
   let parsedRentalData = null;
   if (rental) {
     try {
       parsedRentalData = JSON.parse(rental);
-      console.log("Parsed rental data for editing");
     } catch (e) {
-      console.error("Error parsing rental data:", e);
+      // Invalid rental data
     }
   }
 

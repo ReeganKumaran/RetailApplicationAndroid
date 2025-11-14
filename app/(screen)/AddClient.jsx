@@ -37,14 +37,11 @@ export default function AddClient() {
   const params = useLocalSearchParams();
   const { customerData, disableEdit } = params;
 
-  console.log("AddClient params:", params);
-
   // Safely parse customerData if provided
   let parsedCustomerData = null;
   if (customerData) {
     try {
       parsedCustomerData = JSON.parse(customerData);
-      console.log("Parsed customer data for new rental");
     } catch (e) {
       console.error("Error parsing customer data:", e);
     }

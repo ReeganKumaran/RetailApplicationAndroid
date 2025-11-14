@@ -81,8 +81,8 @@ export default function CustomDatePicker({
         if (!isNaN(parsedDate.getTime())) {
           setTempDate(parsedDate);
         }
-      } catch (e) {
-        console.error("Error parsing date on open:", e);
+      } catch (_e) {
+        // Silently handle invalid date
       }
     }
     setCurrentMode('date'); // Start with date picker

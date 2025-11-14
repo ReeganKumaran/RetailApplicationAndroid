@@ -21,10 +21,6 @@ export default function BasicDetails({
   disableCustomerInformation = false,
   isEditMode = false,
 }) {
-  console.log("customerData In basicDetails:", customerData?.customerName);
-  // console.log("rentalData In basicDetails:", rentalData);
-  console.log("isEditMode:", isEditMode);
-
   // Use rentalData if available (edit mode), otherwise use customerData
   const dataSource = rentalData || customerData;
 
@@ -62,7 +58,6 @@ export default function BasicDetails({
 
   // Reset form when data source or edit mode changes
   useEffect(() => {
-    console.log("Data or mode changed, resetting form. isEditMode:", isEditMode);
     setFormData(initialFormState);
     setErrors({});
     setShowDeliveryAddress(false);
@@ -103,11 +98,6 @@ export default function BasicDetails({
   };
 
   const handleSubmission = async () => {
-    console.log("handleSubmission called");
-    console.log("Form data:", JSON.stringify(formData, null, 2));
-    console.log("isEditMode:", isEditMode);
-    console.log("rentalData._id:", rentalData?._id);
-
     // if (!validateForm()) {
     //   showToast('Please fill in all required fields correctly');
     //   return;
@@ -118,14 +108,10 @@ export default function BasicDetails({
 
       if (isEditMode && rentalData?._id) {
         // Update existing rental
-        console.log("Calling updateRental API...");
         res = await updateRental(rentalData._id, formData);
-        console.log("updateRental response:", JSON.stringify(res, null, 2));
       } else {
         // Create new rental
-        console.log("Calling postRental API...");
         res = await postRental(formData);
-        console.log("postRental response:", JSON.stringify(res, null, 2));
       }
 
       if (res.success) {
@@ -138,11 +124,9 @@ export default function BasicDetails({
           setErrors({});
         }
       } else {
-        console.log("Submission failed:", res.error);
         showToast(res.error || (isEditMode ? "Failed to update rental" : "Failed to add rental"));
       }
-    } catch (error) {
-      console.error("Error in handleSubmission:", error);
+    } catch (_error) {
       showToast("An error occurred. Please try again.");
     }
   };
@@ -377,6 +361,7 @@ export default function BasicDetails({
                 label="Delivery Date"
                 required={true}
                 placeholder="Select Delivery Date"
+                
               />
             </View>
             <View className="bg-white rounded-xl p-4  flex-1">
@@ -580,12 +565,7 @@ export default function BasicDetails({
               </View>
             </View>
           )}
-          <TouchableOpacity
-            onPress={() => {
-              console.log(isEditMode ? "Update rental" : "Create rental");
-              handleSubmission();
-            }}
-          >
+          <TouchableOpacity onPress={handleSubmission}>
             <View className="px-2 py-3 mt-10 bg-black rounded-xl flex flex-row justify-center">
               <Text className="text-white font-bold text-lg">
                 {isEditMode ? "Update" : "Submit"}
