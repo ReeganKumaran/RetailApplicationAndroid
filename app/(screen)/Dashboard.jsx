@@ -121,7 +121,7 @@ export default function Dashboard() {
       //   if (!customerId) continue;
 
         try {
-          const response = await getRental({limit:10, page:1});
+          const response = await getRental({limit:10, page:1, option: "Pending"});
           setRental(response?.data?.rentals || []);
           // const customerRentals = Array.isArray(response?.data?.rentals)
           //   ? response.data.rentals

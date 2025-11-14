@@ -352,7 +352,7 @@ export default function BasicDetails({
             📅 Rental Period
           </Text>
           <View className="flex-row gap-4">
-            <View className="bg-white rounded-xl p-4  flex-1">
+            <View className="bg-white rounded-xl p-4 flex flex-row justify-between  flex-1">
               <DatePicker
                 value={formData.deliveryDate}
                 onDateChange={(date) =>
@@ -361,10 +361,10 @@ export default function BasicDetails({
                 label="Delivery Date"
                 required={true}
                 placeholder="Select Delivery Date"
-                
+
               />
-            </View>
-            <View className="bg-white rounded-xl p-4  flex-1">
+            {/* </View> */}
+            {/* <View className="bg-white rounded-xl p-2  flex-1"> */}
               <DatePicker
                 value={formData.returnDate}
                 onDateChange={(date) =>

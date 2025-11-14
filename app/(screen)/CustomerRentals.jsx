@@ -1,9 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { router, useLocalSearchParams } from "expo-router";
-import { Edit, IndianRupee } from "lucide-react-native";
-import { useCallback, useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import {
+  Edit,
+  EllipsisVertical,
+  IndianRupee,
+  Scroll,
+} from "lucide-react-native";
+import { useCallback, useRef, useState } from "react";
+import { Animated, Pressable, ScrollView, Text, View, Easing  } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { getRental } from "../../src/API/getApi";
 import SegmentedToggle from "../../src/Component/SegmentedToggle";
@@ -17,9 +22,76 @@ export default function CustomerRentals() {
   const [allRentals, setAllRentals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState(null);
-
+  const [showMenu, setShowMenu] = useState(false);
   const customerId = params.customerId;
   const customerName = params.customerName;
+
+  const backdropOpacity = useRef(new Animated.Value(0)).current;
+  const menuOpacity = useRef(new Animated.Value(0)).current;
+  const menuScale = useRef(new Animated.Value(0.96)).current;
+  const menuY = useRef(new Animated.Value(-8)).current;
+
+  const animateIn = () => {
+    setShowMenu(true);
+    Animated.parallel([
+      Animated.timing(backdropOpacity, {
+        toValue: 1,
+        duration: 240,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.quad),
+      }),
+      Animated.timing(menuOpacity, {
+        toValue: 1,
+        duration: 260,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic),
+      }),
+      Animated.timing(menuScale, {
+        toValue: 1,
+        duration: 280,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic),
+      }),
+      Animated.timing(menuY, {
+        toValue: 0,
+        duration: 280,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic),
+      }),
+    ]).start();
+  };
+
+  const animateOut = () => {
+    Animated.parallel([
+      Animated.timing(backdropOpacity, {
+        toValue: 0,
+        duration: 220,
+        useNativeDriver: true,
+        easing: Easing.in(Easing.quad),
+      }),
+      Animated.timing(menuOpacity, {
+        toValue: 0,
+        duration: 220,
+        useNativeDriver: true,
+        easing: Easing.in(Easing.cubic),
+      }),
+      Animated.timing(menuScale, {
+        toValue: 0.96,
+        duration: 220,
+        useNativeDriver: true,
+        easing: Easing.in(Easing.cubic),
+      }),
+      Animated.timing(menuY, {
+        toValue: -8,
+        duration: 220,
+        useNativeDriver: true,
+        easing: Easing.in(Easing.cubic),
+      }),
+    ]).start(({ finished }) => finished && setShowMenu(false));
+  };
+
+  const toggleMenu = () => (showMenu ? animateOut() : animateIn());
+
   const customerData = params.customerData
     ? JSON.parse(params.customerData)
     : null;
@@ -75,18 +147,105 @@ export default function CustomerRentals() {
     // }
   };
 
+  // const toggleMenu = () => {
+  //   setShowMenu(!showMenu);
+  // };
   return (
     <SafeAreaProvider>
-      <SafeAreaView className="flex-1 bg-white">
-        <View className="flex-row items-center p-4 border-b border-gray-200">
-          <Pressable onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={24} color="#000" />
-          </Pressable>
-          <Text className="text-xl font-bold ml-4">
-            {customerName} - Rentals
-          </Text>
-        </View>
+      <SafeAreaView className="flex-1 bg-white ">
+        <View
+          className="flex-row items-center justify-between p-4 border-b border-gray-200 z-50"
+          style={{ position: "relative" }} // anchor absolute children
+        >
+          <View className="flex-row items-center flex-1">
+            <Pressable onPress={() => router.back()}>
+              <Ionicons name="arrow-back" size={24} color="#000" />
+            </Pressable>
+            <Text className="text-xl font-bold ml-4">
+              {customerName} - Rentals
+            </Text>
+          </View>
 
+          <Pressable className="mr-3" onPress={toggleMenu} hitSlop={12}>
+            <EllipsisVertical color="#000" size={24} />
+          </Pressable>
+
+          {/* Backdrop only while visible */}
+          {showMenu && (
+            <Animated.View
+              // covers the header area to catch outside taps
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: "transparent",
+                opacity: backdropOpacity,
+              }}
+            >
+              <Pressable style={{ flex: 1 }} onPress={animateOut} />
+            </Animated.View>
+          )}
+
+          {/* Animated menu */}
+          {showMenu && (
+            <Animated.View
+              style={{
+                position: "absolute",
+                top: 48, // drop under the header row
+                right: 8,
+                opacity: menuOpacity,
+                transform: [{ translateY: menuY }, { scale: menuScale }],
+                backgroundColor: "#fff",
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: "#e5e7eb",
+                overflow: "hidden",
+                elevation: 10, // Android shadow
+                shadowColor: "#000", // iOS shadow
+                shadowOpacity: 0.15,
+                shadowRadius: 12,
+                shadowOffset: { width: 0, height: 6 },
+                zIndex: 60,
+                minWidth: 180,
+              }}
+            >
+              {[
+                {
+                  label: "Create Invoice",
+                  onPress: () => {
+                    /* do something */
+                  },
+                },
+                {
+                  label: "Export as CSV",
+                  onPress: () => {
+                    /* ... */
+                  },
+                },
+                {
+                  label: "Delete Selected",
+                  onPress: () => {
+                    /* ... */
+                  },
+                },
+              ].map((item, i) => (
+                <Pressable
+                  key={i}
+                  onPress={() => {
+                    animateOut();
+                    item.onPress();
+                  }}
+                  android_ripple={{ color: "#e5e7eb" }}
+                  style={{ paddingVertical: 12, paddingHorizontal: 16 }}
+                >
+                  <Text style={{ color: "#111827" }}>{item.label}</Text>
+                </Pressable>
+              ))}
+            </Animated.View>
+          )}
+        </View>
         {/* Customer Summary Card */}
 
         <ScrollView className="flex-1 px-4 py-4">
@@ -96,17 +255,20 @@ export default function CustomerRentals() {
                 <Text className="text-white text-lg font-bold mb-2">
                   Customer Summary
                 </Text>
-                <Pressable className="bg-blue-500 rounded-full px-4 py-2" onPress={() => { 
-                  router.push({
-                    pathname: "/(screen)/AddClient",
-                    params: {
-                      customerId: customerId,
-                      customerName: customerName,
-                      customerData: params.customerData,
-                      disableEdit: false,
-                    },
-                  });
-                }}>
+                <Pressable
+                  className="bg-blue-500 rounded-full px-4 py-2"
+                  onPress={() => {
+                    router.push({
+                      pathname: "/(screen)/AddClient",
+                      params: {
+                        customerId: customerId,
+                        customerName: customerName,
+                        customerData: params.customerData,
+                        disableEdit: false,
+                      },
+                    });
+                  }}
+                >
                   <Text className="text-white">Add Rental</Text>
                 </Pressable>
               </View>

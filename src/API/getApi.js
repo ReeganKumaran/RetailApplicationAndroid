@@ -34,7 +34,8 @@ export const getCustomers = async ({ search } = {}) => {
   try {
     const response = await api.get("/customers", {
       params: {
-        search: search || undefined
+        search: search || undefined,
+        // rentalStatus
       }
     });
     // console.log("response getCustomers:", response.data);
