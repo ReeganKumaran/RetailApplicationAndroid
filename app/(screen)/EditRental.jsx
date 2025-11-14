@@ -1,5 +1,5 @@
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { KeyboardAvoidingView, Platform, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -18,7 +18,8 @@ import AdvanceDetails from "../../src/Component/AdvanceDetails";
 import BasicDetails from "../../src/Component/BasicDetails";
 import SegmentedToggle from "../../src/Component/SegmentedToggle";
 
-export default function AddClient() {
+export default function EditRental() {
+  const router = useRouter();
   const [basicAdvanceToggle, setBasicAdvanceToggle] = useState("Basic");
   const rotation = useSharedValue(0);
   const insets = useSafeAreaInsets();
@@ -33,28 +34,36 @@ export default function AddClient() {
   }));
   const fabBottom = Math.max(insets.bottom, 12) + tabBarHeight + 8;
 
-  // Get route params (for customer data if navigating from customer list)
+  // Get route params
   const params = useLocalSearchParams();
-  const { customerData, disableEdit } = params;
+  const { rental } = params;
 
-  console.log("AddClient params:", params);
+  console.log("EditRental params:", params);
 
-  // Safely parse customerData if provided
-  let parsedCustomerData = null;
-  if (customerData) {
+  // Parse rental data
+  let parsedRentalData = null;
+  if (rental) {
     try {
-      parsedCustomerData = JSON.parse(customerData);
-      console.log("Parsed customer data for new rental");
+      parsedRentalData = JSON.parse(rental);
+      console.log("Parsed rental data for editing");
     } catch (e) {
-      console.error("Error parsing customer data:", e);
+      console.error("Error parsing rental data:", e);
     }
   }
-  
+
+  // If no rental data, go back to dashboard
+  if (!parsedRentalData) {
+    useEffect(() => {
+      router.replace("/(screen)/Dashboard");
+    }, []);
+
+    return null;
+  }
+
   return (
-    <GestureHandlerRootView className="flex-1  ">
+    <GestureHandlerRootView className="flex-1">
       <SafeAreaProvider>
         <SafeAreaView className="flex-1">
-          {/* Optional: Keep KAV for iOS bounce + statusbar spacing */}
           <KeyboardAvoidingView
             style={{ flex: 1 }}
             behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -83,26 +92,15 @@ export default function AddClient() {
               <View className="h-4" />
               {basicAdvanceToggle === "Basic" ? (
                 <BasicDetails
-                  customerData={parsedCustomerData}
-                  disableCustomerInformation={disableEdit}
-                  isEditMode={false}
+                  rentalData={parsedRentalData}
+                  disableCustomerInformation={true}
+                  isEditMode={true}
                 />
               ) : (
                 <AdvanceDetails />
               )}
-              {/* <AdvanceDetails /> */}
             </KeyboardAwareScrollView>
           </KeyboardAvoidingView>
-
-          {/* <TouchableOpacity
-            onPress={() => router.push("/(screen)/Dashboard")}
-            className="absolute rounded-full z-50 p-5 bg-black/40"
-            style={{ right: 20, bottom: fabBottom }}
-          >
-            <Animated.View style={animation}>
-              <Plus color="#ffffff" />
-            </Animated.View>
-          </TouchableOpacity> */}
         </SafeAreaView>
       </SafeAreaProvider>
     </GestureHandlerRootView>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Animated,
@@ -22,27 +22,28 @@ export default function BasicDetails({
   isEditMode = false,
 }) {
   console.log("customerData In basicDetails:", customerData?.customerName);
-  console.log("rentalData In basicDetails:", rentalData);
+  // console.log("rentalData In basicDetails:", rentalData);
   console.log("isEditMode:", isEditMode);
 
   // Use rentalData if available (edit mode), otherwise use customerData
   const dataSource = rentalData || customerData;
 
-  const initialFormState = {
-    customer: dataSource?.customer || dataSource?.customerName || "Reegan",
-    phoneNumber: dataSource?.clientPhoneNumber || dataSource?.phoneNumber || dataSource?.customerDetail?.customerPhone || "9344567890",
-    email: dataSource?.clientEmail || dataSource?.email || dataSource?.customerDetail?.customerEmail || "reegan@example.com",
-    aadhar: dataSource?.clientAadhaar || dataSource?.aadhar || dataSource?.customerDetail?.customerAadhar || "23456 7890 1234",
+  // Memoize initial form state so it only changes when data sources change
+  const initialFormState = useMemo(() => ({
+    customer: dataSource?.customer || dataSource?.customerName || (!isEditMode ? "Reegan" : ""),
+    phoneNumber: dataSource?.clientPhoneNumber || dataSource?.phoneNumber || dataSource?.customerDetail?.customerPhone || (!isEditMode ? "9344567890" : ""),
+    email: dataSource?.clientEmail || dataSource?.email || dataSource?.customerDetail?.customerEmail || (!isEditMode ? "reegan@example.com" : ""),
+    aadhar: dataSource?.clientAadhaar || dataSource?.aadhar || dataSource?.customerDetail?.customerAadhar || (!isEditMode ? "2345 6789 0123" : ""),
     itemDetail: {
-      name: dataSource?.itemDetail?.name || "Party Wear Suit",
-      size: dataSource?.itemDetail?.size || "3x2",
-      price: dataSource?.itemDetail?.price?.toString() || "40",
-      quantity: dataSource?.itemDetail?.quantity?.toString() || "100",
-      advanceAmount: dataSource?.itemDetail?.advanceAmount?.toString() || "200",
+      name: dataSource?.itemDetail?.name || (!isEditMode ? "Party Wear Suit" : ""),
+      size: dataSource?.itemDetail?.size || (!isEditMode ? "3x2" : ""),
+      price: dataSource?.itemDetail?.price?.toString() || (!isEditMode ? "40" : ""),
+      quantity: dataSource?.itemDetail?.quantity?.toString() || (!isEditMode ? "100" : ""),
+      advanceAmount: dataSource?.itemDetail?.advanceAmount?.toString() || (!isEditMode ? "200" : ""),
     },
     deliveryDate: dataSource?.deliveryDate || "",
     returnDate: dataSource?.returnDate || "",
-    notes: dataSource?.notes || "test notes",
+    notes: dataSource?.notes || (!isEditMode ? "Test rental notes" : ""),
     deliveryAddress: {
       street: dataSource?.deliveryAddress?.street || "",
       city: dataSource?.deliveryAddress?.city || "",
@@ -52,12 +53,20 @@ export default function BasicDetails({
       landmark: dataSource?.deliveryAddress?.landmark || "",
       isPrimary: dataSource?.deliveryAddress?.isPrimary ?? true,
     },
-  };
+  }), [dataSource, isEditMode]);
 
   const [showDeliveryAddress, setShowDeliveryAddress] = useState(false);
   const slideAnimation = useRef(new Animated.Value(0)).current;
   const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState(initialFormState);
+
+  // Reset form when data source or edit mode changes
+  useEffect(() => {
+    console.log("Data or mode changed, resetting form. isEditMode:", isEditMode);
+    setFormData(initialFormState);
+    setErrors({});
+    setShowDeliveryAddress(false);
+  }, [initialFormState, isEditMode]);
 
   const validateForm = () => {
     const { isValid, errors: newErrors } = validateRentalForm(

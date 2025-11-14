@@ -56,10 +56,9 @@ export default function RentalDetails() {
   
   const handleEditPress = () => {
     router.push({
-      pathname: "/(screen)/AddClient",
+      pathname: "/(screen)/EditRental",
       params: {
         rental: JSON.stringify(rental),
-        editMode: "true",
       },
     });
   };
