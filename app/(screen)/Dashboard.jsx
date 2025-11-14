@@ -15,6 +15,7 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import React, { useCallback, useEffect, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import { getCustomers, getRental } from "../../src/API/getApi";
+import { StatsCardSkeleton, ChartSkeleton } from "../../src/Component/SkeletonLoaders";
 
 const screenWidth = Dimensions.get("window").width;
 const chartWidth = screenWidth - 32; // padding
@@ -164,19 +165,29 @@ export default function Dashboard() {
             <View style={{ flex: 1 }}>
               {/* Scrollable Content */}
               <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }}>
-                {/* Line Chart */}
-                <View className="mt-2 flex flex-col gap-4">
-                  <BarChart
-                    data={lineData}
-                    width={chartWidth}
-                    height={220}
-                    chartConfig={chartConfig}
-                    barRadius={6} // rounds the bar corners
-                    barPercentage={0.7} // make bars wider so the radius is visible
-                    withVerticalLines={false}
-                    style={{ borderRadius: 16, alignSelf: "center" }}
-                  />
-                  <View className="flex flex-row gap-2 pe-4 justify-between w-full">
+                {/* Skeleton Loading for Charts and Stats */}
+                {loading ? (
+                  <View className="mt-2 flex flex-col gap-4">
+                    <ChartSkeleton />
+                    <View className="flex flex-row gap-2 justify-between w-full">
+                      <StatsCardSkeleton />
+                      <StatsCardSkeleton />
+                      <StatsCardSkeleton />
+                    </View>
+                  </View>
+                ) : (
+                  <View className="mt-2 flex flex-col gap-4">
+                    <BarChart
+                      data={lineData}
+                      width={chartWidth}
+                      height={220}
+                      chartConfig={chartConfig}
+                      barRadius={6}
+                      barPercentage={0.7}
+                      withVerticalLines={false}
+                      style={{ borderRadius: 16, alignSelf: "center" }}
+                    />
+                    <View className="flex flex-row gap-2 pe-4 justify-between w-full">
                     <View className="flex w-1/3 flex-row bg-gray-950 p-4 rounded-3xl ">
                       <Box color="#ffffff" />
                       <View className="ms-2">
@@ -202,56 +213,53 @@ export default function Dashboard() {
                         <Text className="text-white">Rent</Text>
                       </View>
                     </View>
-                  </View>
-                  {error.length > 0 && (
-                    <Text className="text-red-500 text-center">{error}</Text>
-                  )}
-                  {loading && (
-                    <ActivityIndicator size="small" color="#ffffff" />
-                  )}
-                  {!loading && rental.length === 0 && !error && (
-                    <Text className="text-gray-400 text-center">
-                      No rentals available.
-                    </Text>
-                  )}
-                  {!loading &&
-                    rental.length > 0 &&
-                    rental.map((item, idx) => (
-                      <Pressable
-                        key={idx}
-                        onPress={() => {
-                          console.log("Navigating with item:", item);
-                          try {
-                            router.push(
-                              `/(screen)/RentalDetails?id=${item._id || item.id}&data=${encodeURIComponent(JSON.stringify(item))}`
-                            );
-                          } catch (error) {
-                            console.error("Navigation error:", error);
-                          }
-                        }}
-                        className="flex flex-col py-3 px-5  shadow-md bg-gray-950 rounded-3xl active:opacity-80"
-                      >
-                        <View className="flex flex-row justify-between w-full font-bold">
+                    </View>
+                    {error.length > 0 && (
+                      <Text className="text-red-500 text-center">{error}</Text>
+                    )}
+                    {!error && rental.length === 0 && (
+                      <Text className="text-gray-400 text-center">
+                        No rentals available.
+                      </Text>
+                    )}
+                    {rental.length > 0 &&
+                      rental.map((item, idx) => (
+                        <Pressable
+                          key={idx}
+                          onPress={() => {
+                            console.log("Navigating with item:", item);
+                            try {
+                              router.push(
+                                `/(screen)/RentalDetails?id=${item._id || item.id}&data=${encodeURIComponent(JSON.stringify(item))}`
+                              );
+                            } catch (error) {
+                              console.error("Navigation error:", error);
+                            }
+                          }}
+                          className="flex flex-col py-3 px-5  shadow-md bg-gray-950 rounded-3xl active:opacity-80"
+                        >
+                          <View className="flex flex-row justify-between w-full font-bold">
+                            <Text className="text-white text-[16px] ">
+                              {item.customer || item.customerDetail?.customerName}
+                            </Text>
+                            <Text className="text-white flex flex-row justify-center items-center text-[20px]">
+                              <IndianRupee color="#ffffff" size={14} />
+                              {item.itemDetail?.totalPrice ||
+                                item.totalRent ||
+                                item.price}
+                            </Text>
+                          </View>
                           <Text className="text-white text-[16px] ">
-                            {item.customer || item.customerDetail?.customerName}
+                            {item.itemDetail?.name || item.name}
                           </Text>
-                          <Text className="text-white flex flex-row justify-center items-center text-[20px]">
-                            <IndianRupee color="#ffffff" size={14} />
-                            {item.itemDetail?.totalPrice ||
-                              item.totalRent ||
-                              item.price}
+                          <Text className="text-white text-[16px] ">
+                            {item.itemDetail?.size || item.size} &bull;{" "}
+                            {item.itemDetail?.quantity || item.quantity} pcs
                           </Text>
-                        </View>
-                        <Text className="text-white text-[16px] ">
-                          {item.itemDetail?.name || item.name}
-                        </Text>
-                        <Text className="text-white text-[16px] ">
-                          {item.itemDetail?.size || item.size} &bull;{" "}
-                          {item.itemDetail?.quantity || item.quantity} pcs
-                        </Text>
-                      </Pressable>
-                    ))}
-                </View>
+                        </Pressable>
+                      ))}
+                  </View>
+                )}
               </ScrollView>
             </View>
           </SafeAreaView>

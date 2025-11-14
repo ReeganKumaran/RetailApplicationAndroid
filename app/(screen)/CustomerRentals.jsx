@@ -9,6 +9,7 @@ import { getRental } from "../../src/API/getApi";
 import SegmentedToggle from "../../src/Component/SegmentedToggle";
 import { formatDate, getStatusColor } from "../../src/utils/Formater";
 import { hide } from "expo-splash-screen";
+import { RentalListSkeleton } from "../../src/Component/SkeletonLoaders";
 
 export default function CustomerRentals() {
   const params = useLocalSearchParams();
@@ -153,9 +154,7 @@ export default function CustomerRentals() {
             />
           </View>
           {loading ? (
-            <View className="flex-1 justify-center items-center">
-              <Text className="text-gray-500">Loading rentals...</Text>
-            </View>
+            <RentalListSkeleton count={4} />
           ) : rentals.length === 0 ? (
             <View className="flex-1 justify-center items-center">
               <Text className="text-gray-500 text-lg">

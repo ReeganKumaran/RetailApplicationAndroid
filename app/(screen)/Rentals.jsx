@@ -9,27 +9,32 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { assets } from "../../assets/asset";
+import { CustomerListSkeleton } from "../../src/Component/SkeletonLoaders";
+
 export default function Rentals() {
   const [customer, setCustomer] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+
   useFocusEffect(
     useCallback(() => {
       fetchCustomers();
     }, [searchQuery])
   );
-  //   useEffect(() => {
+
   const fetchCustomers = async () => {
     try {
+      setLoading(true);
       const customersData = await getCustomers({
         search: searchQuery || undefined,
       });
       setCustomer(customersData?.data.customers || []);
     } catch (error) {
       console.error("Error fetching customers:", error);
+    } finally {
+      setLoading(false);
     }
   };
-  // fetchCustomers();
-  //   }, []);
 
   return (
     <SafeAreaProvider>
@@ -56,11 +61,17 @@ export default function Rentals() {
         </View>
 
         <ScrollView className="flex-1">
-          <View className="px-4 gap-4 pb-4">
-            {/* <Text>Customers</Text> */}
-            {/* <Text>{JSON.stringify(customer)} </Text> */}
-            {customer.length > 0 &&
-              customer?.map((item, idx) => (
+          {loading ? (
+            <CustomerListSkeleton count={5} />
+          ) : (
+            <View className="px-4 gap-4 pb-4">
+              {customer.length === 0 && (
+                <Text className="text-gray-400 text-center mt-4">
+                  No customers found.
+                </Text>
+              )}
+              {customer.length > 0 &&
+                customer?.map((item, idx) => (
                 <Pressable
                   key={idx}
                   onPress={() => {
@@ -117,7 +128,8 @@ export default function Rentals() {
                   </View>
                 </Pressable>
               ))}
-          </View>
+            </View>
+          )}
         </ScrollView>
       </SafeAreaView>
     </SafeAreaProvider>
