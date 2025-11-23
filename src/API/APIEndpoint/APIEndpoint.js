@@ -7,6 +7,6 @@ export const baseURL = () => {
     case 2:
       return "http://10.41.173.42:5000"; // not in working condition
     default:
-      return "http://localhost:5000"; // not in working condition
+      return "http://10.178.240.42:5000"; // Use your computer's IP instead of localhost
   }
 };
