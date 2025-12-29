@@ -6,11 +6,11 @@ import {
   Pressable,
   ScrollView,
   Text,
+  TextInput,
   ToastAndroid,
   TouchableOpacity,
   View,
 } from "react-native";
-import { TextInput } from "react-native-gesture-handler";
 import { postRental, updateRental } from "../API/postApi";
 import { validateRentalForm } from "../helper/Validation";
 import DatePicker from "./DatePicker";

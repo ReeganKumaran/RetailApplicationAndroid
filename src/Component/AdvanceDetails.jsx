@@ -1,6 +1,5 @@
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, ScrollView, TextInput, TouchableOpacity } from "react-native";
 import React, { useState } from "react";
-import { TextInput } from "react-native-gesture-handler";
 import DatePicker from "./DatePicker";
 
 export default function AdvanceDetails() {

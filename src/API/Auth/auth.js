@@ -50,7 +50,16 @@ export const verifyOTP = async (email, otp) => {
       email,
       otp,
     });
-    await storeToken(response.data.token);
+    console.log("OTP Verify Response:", response.data);
+
+    // Store token from response.data.data.token
+    if (response.data?.data?.token) {
+      await storeToken(response.data.data.token);
+      console.log("Token stored successfully after OTP verification");
+    } else {
+      console.warn("No token found in OTP verification response");
+    }
+
     return response.data;
   } catch (error) {
     throw new Error (error.response?.data?.message || "OTP verification failed");

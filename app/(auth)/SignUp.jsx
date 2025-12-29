@@ -1,17 +1,15 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Image,
   KeyboardAvoidingView,
+  ScrollView,
   Text,
+  TextInput,
   TouchableOpacity,
 } from "react-native";
-import {
-  GestureHandlerRootView,
-  ScrollView,
-  TextInput,
-} from "react-native-gesture-handler";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { assets } from "../../assets/asset";
 import { getSignUp, verifyOTP } from "../../src/API/Auth/auth";
@@ -41,7 +39,7 @@ export default function SignUp() {
           else if (!validatePassword(form.password))
             throw new Error("Invalid password format");
           else {
-            await setError("");
+            setError("");
             const res = await getSignUp(form);
             if ((res.success = true)) {
               setOtpVerify(true);
@@ -63,11 +61,16 @@ export default function SignUp() {
           // else if (!validatePassword(form.password))
           //   throw new Error("Invalid password format");
           else {
-            await setError("");
+            setError("");
             const res = await verifyOTP(form.email, form.otp);
-            if (res.success === true) {
+            console.log("OTP Verification Result:", res);
+            
+            if (res.success === true && res.statusCode === 200) {
               setSubmit(false);
-              router.push("../(screen)/Dashboard");
+              // Use replace instead of push to prevent going back to OTP screen
+              router.replace("/(screen)/Dashboard");
+            } else {
+              throw new Error(res.message || "OTP verification failed");
             }
             return res;
           }
