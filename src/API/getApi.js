@@ -45,7 +45,7 @@ export const getCustomers = async ({ search } = {}) => {
     return error.response?.data || error.message;
   }
 };
-export const generateInvoicePDF = async (rentalIds) => {
+export const generateInvoicePDF = async (rentalIds, token) => {
     try {
         // Convert array to comma-separated string for query params
         const rentalIdsParam = rentalIds.join(',');
@@ -53,6 +53,7 @@ export const generateInvoicePDF = async (rentalIds) => {
         const response = await api.get("/generate-invoice-pdf", {
             params: {
                 rentalIds: rentalIdsParam,
+                token: token || undefined,
             },
             responseType: 'blob' // Important for PDF download
         });

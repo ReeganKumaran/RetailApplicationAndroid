@@ -5,6 +5,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { router, useLocalSearchParams } from "expo-router";
 import * as Sharing from 'expo-sharing';
 import {
+  Download,
   EllipsisVertical,
   IndianRupee,
   Share2
@@ -16,6 +17,8 @@ import {
   Animated,
   Easing,
   Modal,
+  NativeModules,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -25,6 +28,7 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { WebView } from 'react-native-webview';
 import { baseURL } from "../../src/API/APIEndpoint/APIEndpoint";
 import { generateInvoicePDF, getRental, previewInvoicePDF } from "../../src/API/getApi";
+import { getToken } from "../../src/API/Auth/token";
 import SegmentedToggle from "../../src/Component/SegmentedToggle";
 import { RentalListSkeleton } from "../../src/Component/SkeletonLoaders";
 import { formatDate, getStatusColor } from "../../src/utils/Formater";
@@ -41,6 +45,7 @@ export default function CustomerRentals() {
   const [showPDFModal, setShowPDFModal] = useState(false);
   const [invoiceHtml, setInvoiceHtml] = useState("");
   const [downloading, setDownloading] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const customerId = params.customerId;
   const customerName = params.customerName;
@@ -207,6 +212,34 @@ export default function CustomerRentals() {
       reader.readAsDataURL(blob);
     });
 
+  const createInvoicePdfPayload = async (rentalIds) => {
+    const token = await getToken();
+    if (!token) {
+      throw new Error("Missing auth token. Please log in again.");
+    }
+
+    const result = await generateInvoicePDF(rentalIds, token);
+    if (!result.success) {
+      const message = result.error?.message || result.error || "Failed to generate invoice";
+      throw new Error(message);
+    }
+
+    const dataUrl = await blobToDataUrl(result.data);
+    const base64Data = dataUrl.split(',')[1];
+    if (!base64Data) {
+      throw new Error("Failed to decode invoice file.");
+    }
+
+    const filename = `invoice_${Date.now()}.pdf`;
+    const fileUri = `${FileSystem.cacheDirectory}${filename}`;
+
+    await FileSystem.writeAsStringAsync(fileUri, base64Data, {
+      encoding: 'base64',
+    });
+
+    return { fileUri, filename, base64Data };
+  };
+
   // Generate Invoice Preview (HTML)
   const handleGenerateInvoice = async () => {
     if (selectedRentals.length === 0) {
@@ -250,47 +283,97 @@ export default function CustomerRentals() {
     try {
       setDownloading(true);
 
-      const result = await generateInvoicePDF(selectedRentals);
-      if (!result.success) {
-        const message = result.error?.message || result.error || "Failed to generate invoice";
-        Alert.alert("Error", message);
+      const turboModule = global?.__turboModuleProxy?.("ReactNativeBlobUtil");
+      if (
+        Platform.OS !== "android" ||
+        (!NativeModules.ReactNativeBlobUtil && !NativeModules.RNFetchBlob && !turboModule)
+      ) {
+        Alert.alert("Download Manager Unavailable", "Install a dev client build with react-native-blob-util to enable native downloads.");
         return;
       }
 
-      const dataUrl = await blobToDataUrl(result.data);
-      const base64Data = dataUrl.split(',')[1];
-      if (!base64Data) {
-        Alert.alert("Error", "Failed to decode invoice file.");
+      let RNBlobUtil;
+      try {
+        const module = require("react-native-blob-util");
+        RNBlobUtil = module?.default ?? module;
+      } catch (loadError) {
+        Alert.alert("Download Manager Unavailable", "Install a dev client build with react-native-blob-util to enable native downloads.");
         return;
       }
 
-      // Save PDF to cache
+      const token = await getToken();
+      if (!token) {
+        Alert.alert("Error", "Missing auth token. Please log in again.");
+        return;
+      }
+
+      const rentalIdsParam = selectedRentals.join(',');
+      const downloadUrl = `${baseURL()}/generate-invoice-pdf?rentalIds=${encodeURIComponent(rentalIdsParam)}&token=${encodeURIComponent(token)}`;
       const filename = `invoice_${Date.now()}.pdf`;
-      const fileUri = `${FileSystem.cacheDirectory}${filename}`;
-
-      await FileSystem.writeAsStringAsync(fileUri, base64Data, {
-        encoding: 'base64',
-      });
-
-      console.log("PDF saved to:", fileUri);
-
-      // Use Sharing API to let user save the file
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(fileUri, {
-          mimeType: 'application/pdf',
-          dialogTitle: 'Save Invoice',
-          UTI: 'com.adobe.pdf'
-        });
+      const downloadDir = RNBlobUtil?.fs?.dirs?.DownloadDir;
+      if (!downloadDir) {
+        Alert.alert("Not Supported", "Download manager is only available on Android.");
+        return;
       }
+      const downloadPath = `${downloadDir}/${filename}`;
+
+      await RNBlobUtil.config({
+        addAndroidDownloads: {
+          useDownloadManager: true,
+          notification: true,
+          title: filename,
+          description: "Invoice PDF",
+          mime: "application/pdf",
+          path: downloadPath,
+          mediaScannable: true,
+        },
+      }).fetch("GET", downloadUrl);
       didDownload = true;
     } catch (error) {
       console.error("Download error:", error);
-      Alert.alert("Error", "Failed to download invoice: " + error.message);
+      Alert.alert("Error", "Failed to download invoice: " + (error?.message || error));
     } finally {
       setDownloading(false);
     }
 
     if (didDownload) {
+      // Close modal and clear selection
+      setShowPDFModal(false);
+      setSelectionMode(false);
+      setSelectedRentals([]);
+    }
+  };
+
+  // Share PDF
+  const handleSharePDF = async () => {
+    if (selectedRentals.length === 0) {
+      Alert.alert("No Rentals Selected", "Please select at least one rental to share invoice");
+      return;
+    }
+
+    let didShare = false;
+    try {
+      setSharing(true);
+
+      if (await Sharing.isAvailableAsync()) {
+        const { fileUri } = await createInvoicePdfPayload(selectedRentals);
+        await Sharing.shareAsync(fileUri, {
+          mimeType: 'application/pdf',
+          dialogTitle: 'Share Invoice',
+          UTI: 'com.adobe.pdf'
+        });
+        didShare = true;
+      } else {
+        Alert.alert("Error", "Sharing is not available on this device.");
+      }
+    } catch (error) {
+      console.error("Share error:", error);
+      Alert.alert("Error", "Failed to share invoice: " + (error?.message || error));
+    } finally {
+      setSharing(false);
+    }
+
+    if (didShare) {
       // Close modal and clear selection
       setShowPDFModal(false);
       setSelectionMode(false);
@@ -638,17 +721,30 @@ export default function CustomerRentals() {
                 <Ionicons name="close" size={28} color="black" />
               </Pressable>
               <Text className="text-lg font-bold">Invoice Preview</Text>
-              <Pressable
-                onPress={handleDownloadPDF}
-                disabled={downloading}
-                hitSlop={12}
-              >
-                {downloading ? (
-                  <ActivityIndicator size="small" color="black" />
-                ) : (
-                  <Share2 size={24} color="black" />
-                )}
-              </Pressable>
+              <View className="flex-row items-center gap-4">
+                <Pressable
+                  onPress={handleDownloadPDF}
+                  disabled={downloading || sharing}
+                  hitSlop={12}
+                >
+                  {downloading ? (
+                    <ActivityIndicator size="small" color="black" />
+                  ) : (
+                    <Download size={24} color="black" />
+                  )}
+                </Pressable>
+                <Pressable
+                  onPress={handleSharePDF}
+                  disabled={downloading || sharing}
+                  hitSlop={12}
+                >
+                  {sharing ? (
+                    <ActivityIndicator size="small" color="black" />
+                  ) : (
+                    <Share2 size={24} color="black" />
+                  )}
+                </Pressable>
+              </View>
             </View>
 
             {/* Invoice Preview WebView */}
