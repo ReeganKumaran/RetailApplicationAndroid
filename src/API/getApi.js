@@ -45,3 +45,58 @@ export const getCustomers = async ({ search } = {}) => {
     return error.response?.data || error.message;
   }
 };
+export const generateInvoicePDF = async (rentalIds) => {
+    try {
+        // Convert array to comma-separated string for query params
+        const rentalIdsParam = rentalIds.join(',');
+
+        const response = await api.get("/generate-invoice-pdf", {
+            params: {
+                rentalIds: rentalIdsParam,
+            },
+            responseType: 'blob' // Important for PDF download
+        });
+
+        return {
+            data: response.data,
+            status: response.status,
+            success: true
+        };
+    } catch (error) {
+        console.error("Invoice generation error:", error);
+        return {
+            error: error.response?.data || "Failed to generate invoice",
+            status: error.response?.status || 500,
+            success: false
+        };
+    }
+}
+export const previewInvoicePDF = async (rentalIds) => {
+    try {
+        // Convert array to comma-separated string for query params
+        const rentalIdsParam = rentalIds.join(',');
+
+        const response = await api.get("/preview-invoice", {
+            params: {
+                rentalIds: rentalIdsParam,
+            },
+            headers: {
+                Accept: "text/html",
+            },
+            responseType: "text"
+        });
+
+        return {
+            data: response.data,
+            status: response.status,
+            success: true
+        };
+    } catch (error) {
+        console.error("Invoice preview error:", error);
+        return {
+            error: error.response?.data || "Failed to preview invoice",
+            status: error.response?.status || 500,
+            success: false
+        };
+    }
+}

@@ -34,25 +34,3 @@ export const updateRental = async (customerId, payload) => {
     }
 }
 
-export const generateInvoicePDF = async (rentalIds) => {
-    try {
-        const response = await api.post("/generate-invoice-pdf", {
-            rentalIds
-        }, {
-            responseType: 'blob' // Important for PDF download
-        });
-
-        return {
-            data: response.data,
-            status: response.status,
-            success: true
-        };
-    } catch (error) {
-        console.error("Invoice generation error:", error);
-        return {
-            error: error.response?.data || "Failed to generate invoice",
-            status: error.response?.status || 500,
-            success: false
-        };
-    }
-}

@@ -1,38 +1,33 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect } from "@react-navigation/native";
-import { router, useLocalSearchParams } from "expo-router";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import { useFocusEffect } from "@react-navigation/native";
+import * as FileSystem from 'expo-file-system/legacy';
+import { router, useLocalSearchParams } from "expo-router";
+import * as Sharing from 'expo-sharing';
 import {
-  Edit,
   EllipsisVertical,
   IndianRupee,
-  Scroll,
+  Share2
 } from "lucide-react-native";
 import { useCallback, useRef, useState } from "react";
 import {
-  Animated,
+  ActivityIndicator,
   Alert,
+  Animated,
+  Easing,
   Modal,
   Pressable,
   ScrollView,
   Text,
-  View,
-  Easing,
-  ActivityIndicator,
-  TouchableOpacity,
+  View
 } from "react-native";
-import { WebView } from 'react-native-webview';
-import { cacheDirectory, downloadAsync } from 'expo-file-system/legacy';
-import * as MediaLibrary from 'expo-media-library';
-import * as Sharing from 'expo-sharing';
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { getRental } from "../../src/API/getApi";
+import { WebView } from 'react-native-webview';
 import { baseURL } from "../../src/API/APIEndpoint/APIEndpoint";
-import { getToken } from "../../src/API/Auth/token";
+import { generateInvoicePDF, getRental, previewInvoicePDF } from "../../src/API/getApi";
 import SegmentedToggle from "../../src/Component/SegmentedToggle";
-import { formatDate, getStatusColor } from "../../src/utils/Formater";
-import { hide } from "expo-splash-screen";
 import { RentalListSkeleton } from "../../src/Component/SkeletonLoaders";
+import { formatDate, getStatusColor } from "../../src/utils/Formater";
 
 export default function CustomerRentals() {
   const params = useLocalSearchParams();
@@ -44,8 +39,9 @@ export default function CustomerRentals() {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedRentals, setSelectedRentals] = useState([]);
   const [showPDFModal, setShowPDFModal] = useState(false);
-  const [pdfUrl, setPdfUrl] = useState("");
+  const [invoiceHtml, setInvoiceHtml] = useState("");
   const [downloading, setDownloading] = useState(false);
+  const [loadingPreview, setLoadingPreview] = useState(false);
   const customerId = params.customerId;
   const customerName = params.customerName;
 
@@ -203,7 +199,15 @@ export default function CustomerRentals() {
     setSelectedRentals([]);
   };
 
-  // Generate Invoice PDF
+  const blobToDataUrl = (blob) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("Failed to read PDF"));
+      reader.onloadend = () => resolve(reader.result);
+      reader.readAsDataURL(blob);
+    });
+
+  // Generate Invoice Preview (HTML)
   const handleGenerateInvoice = async () => {
     if (selectedRentals.length === 0) {
       Alert.alert("No Rentals Selected", "Please select at least one rental to generate invoice");
@@ -211,75 +215,93 @@ export default function CustomerRentals() {
     }
 
     try {
+      setLoadingPreview(true);
+      setShowPDFModal(true);
+      setInvoiceHtml("");
       console.log("Generating invoice for rental IDs:", selectedRentals);
 
-      // Get auth token
-      const token = await getToken();
+      // Call preview endpoint to get HTML
+      const result = await previewInvoicePDF(selectedRentals);
 
-      // Build the PDF URL with query params using dynamic baseURL
-      const apiBaseUrl = baseURL();
-      const rentalIdsParam = selectedRentals.join(',');
-      const url = `${apiBaseUrl}/generate-invoice-pdf?rentalIds=${rentalIdsParam}&token=${token}`;
-
-      console.log("PDF URL:", url);
-
-      // Show PDF in modal
-      setPdfUrl(url);
-      setShowPDFModal(true);
+      if (result.success) {
+        setInvoiceHtml(result.data || "");
+        setLoadingPreview(false);
+      } else {
+        setLoadingPreview(false);
+        setShowPDFModal(false);
+        Alert.alert("Error", result.error?.message || "Failed to preview invoice");
+      }
     } catch (error) {
-      console.error("Invoice generation error:", error);
+      console.error("Invoice preview error:", error);
+      setLoadingPreview(false);
+      setShowPDFModal(false);
       Alert.alert("Error", "Failed to open invoice. Please try again.");
     }
   };
 
   // Download PDF to device
   const handleDownloadPDF = async () => {
+    if (selectedRentals.length === 0) {
+      Alert.alert("No Rentals Selected", "Please select at least one rental to download invoice");
+      return;
+    }
+
+    let didDownload = false;
     try {
       setDownloading(true);
 
-      // Get token for authorization
-      const token = await getToken();
+      const result = await generateInvoicePDF(selectedRentals);
+      if (!result.success) {
+        const message = result.error?.message || result.error || "Failed to generate invoice";
+        Alert.alert("Error", message);
+        return;
+      }
 
-      // Download the PDF with Authorization header
+      const dataUrl = await blobToDataUrl(result.data);
+      const base64Data = dataUrl.split(',')[1];
+      if (!base64Data) {
+        Alert.alert("Error", "Failed to decode invoice file.");
+        return;
+      }
+
+      // Save PDF to cache
       const filename = `invoice_${Date.now()}.pdf`;
-      const fileUri = `${cacheDirectory}${filename}`;
+      const fileUri = `${FileSystem.cacheDirectory}${filename}`;
 
-      const downloadResult = await downloadAsync(pdfUrl, fileUri, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      await FileSystem.writeAsStringAsync(fileUri, base64Data, {
+        encoding: 'base64',
       });
 
-      console.log("Downloaded to:", downloadResult.uri);
+      console.log("PDF saved to:", fileUri);
 
       // Use Sharing API to let user save the file
-      // This works on all Android versions without MediaLibrary issues
       if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(downloadResult.uri, {
+        await Sharing.shareAsync(fileUri, {
           mimeType: 'application/pdf',
           dialogTitle: 'Save Invoice',
           UTI: 'com.adobe.pdf'
         });
       }
-
-      Alert.alert("Success", "Invoice ready to save!");
+      didDownload = true;
+    } catch (error) {
+      console.error("Download error:", error);
+      Alert.alert("Error", "Failed to download invoice: " + error.message);
+    } finally {
       setDownloading(false);
+    }
 
+    if (didDownload) {
       // Close modal and clear selection
       setShowPDFModal(false);
       setSelectionMode(false);
       setSelectedRentals([]);
-    } catch (error) {
-      console.error("Download error:", error);
-      Alert.alert("Error", "Failed to download invoice: " + error.message);
-      setDownloading(false);
     }
   };
 
   // Close PDF modal
   const closePDFModal = () => {
     setShowPDFModal(false);
-    setPdfUrl("");
+    setInvoiceHtml("");
   };
 
   return (
@@ -603,7 +625,7 @@ export default function CustomerRentals() {
           )}
         </ScrollView>
 
-        {/* PDF Viewer Modal */}
+        {/* Invoice Preview Modal */}
         <Modal
           visible={showPDFModal}
           animationType="slide"
@@ -616,31 +638,36 @@ export default function CustomerRentals() {
                 <Ionicons name="close" size={28} color="black" />
               </Pressable>
               <Text className="text-lg font-bold">Invoice Preview</Text>
-              <TouchableOpacity
+              <Pressable
                 onPress={handleDownloadPDF}
                 disabled={downloading}
-                className="bg-black px-4 py-2 rounded-lg"
+                hitSlop={12}
               >
                 {downloading ? (
-                  <ActivityIndicator size="small" color="white" />
+                  <ActivityIndicator size="small" color="black" />
                 ) : (
-                  <Text className="text-white font-semibold">Download</Text>
+                  <Share2 size={24} color="black" />
                 )}
-              </TouchableOpacity>
+              </Pressable>
             </View>
 
-            {/* PDF WebView */}
-            <WebView
-              source={{ uri: pdfUrl }}
-              style={{ flex: 1 }}
-              startInLoadingState={true}
-              renderLoading={() => (
-                <View className="flex-1 items-center justify-center">
-                  <ActivityIndicator size="large" color="#000" />
-                  <Text className="mt-4">Loading invoice...</Text>
-                </View>
-              )}
-            />
+            {/* Invoice Preview WebView */}
+            {loadingPreview ? (
+              <View className="flex-1 items-center justify-center">
+                <ActivityIndicator size="large" color="#000" />
+                <Text className="mt-4">Loading invoice preview...</Text>
+              </View>
+            ) : invoiceHtml ? (
+              <WebView
+                originWhitelist={["*"]}
+                source={{ html: invoiceHtml, baseUrl: baseURL() }}
+                style={{ flex: 1 }}
+              />
+            ) : (
+              <View className="flex-1 items-center justify-center">
+                <Text>No preview to display</Text>
+              </View>
+            )}
           </SafeAreaView>
         </Modal>
       </SafeAreaView>
