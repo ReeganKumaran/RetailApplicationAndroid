@@ -11,14 +11,24 @@ import {
 import { useCallback, useRef, useState } from "react";
 import {
   Animated,
+  Alert,
+  Modal,
   Pressable,
   ScrollView,
   Text,
   View,
   Easing,
+  ActivityIndicator,
+  TouchableOpacity,
 } from "react-native";
+import { WebView } from 'react-native-webview';
+import { cacheDirectory, downloadAsync } from 'expo-file-system/legacy';
+import * as MediaLibrary from 'expo-media-library';
+import * as Sharing from 'expo-sharing';
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { getRental } from "../../src/API/getApi";
+import { baseURL } from "../../src/API/APIEndpoint/APIEndpoint";
+import { getToken } from "../../src/API/Auth/token";
 import SegmentedToggle from "../../src/Component/SegmentedToggle";
 import { formatDate, getStatusColor } from "../../src/utils/Formater";
 import { hide } from "expo-splash-screen";
@@ -33,6 +43,9 @@ export default function CustomerRentals() {
   const [showMenu, setShowMenu] = useState(false);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedRentals, setSelectedRentals] = useState([]);
+  const [showPDFModal, setShowPDFModal] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState("");
+  const [downloading, setDownloading] = useState(false);
   const customerId = params.customerId;
   const customerName = params.customerName;
 
@@ -190,10 +203,85 @@ export default function CustomerRentals() {
     setSelectedRentals([]);
   };
 
-  // Select all rentals
-  const selectAll = () => {
-    setSelectedRentals(rentals.map((r) => r._id));
+  // Generate Invoice PDF
+  const handleGenerateInvoice = async () => {
+    if (selectedRentals.length === 0) {
+      Alert.alert("No Rentals Selected", "Please select at least one rental to generate invoice");
+      return;
+    }
+
+    try {
+      console.log("Generating invoice for rental IDs:", selectedRentals);
+
+      // Get auth token
+      const token = await getToken();
+
+      // Build the PDF URL with query params using dynamic baseURL
+      const apiBaseUrl = baseURL();
+      const rentalIdsParam = selectedRentals.join(',');
+      const url = `${apiBaseUrl}/generate-invoice-pdf?rentalIds=${rentalIdsParam}&token=${token}`;
+
+      console.log("PDF URL:", url);
+
+      // Show PDF in modal
+      setPdfUrl(url);
+      setShowPDFModal(true);
+    } catch (error) {
+      console.error("Invoice generation error:", error);
+      Alert.alert("Error", "Failed to open invoice. Please try again.");
+    }
   };
+
+  // Download PDF to device
+  const handleDownloadPDF = async () => {
+    try {
+      setDownloading(true);
+
+      // Get token for authorization
+      const token = await getToken();
+
+      // Download the PDF with Authorization header
+      const filename = `invoice_${Date.now()}.pdf`;
+      const fileUri = `${cacheDirectory}${filename}`;
+
+      const downloadResult = await downloadAsync(pdfUrl, fileUri, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log("Downloaded to:", downloadResult.uri);
+
+      // Use Sharing API to let user save the file
+      // This works on all Android versions without MediaLibrary issues
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(downloadResult.uri, {
+          mimeType: 'application/pdf',
+          dialogTitle: 'Save Invoice',
+          UTI: 'com.adobe.pdf'
+        });
+      }
+
+      Alert.alert("Success", "Invoice ready to save!");
+      setDownloading(false);
+
+      // Close modal and clear selection
+      setShowPDFModal(false);
+      setSelectionMode(false);
+      setSelectedRentals([]);
+    } catch (error) {
+      console.error("Download error:", error);
+      Alert.alert("Error", "Failed to download invoice: " + error.message);
+      setDownloading(false);
+    }
+  };
+
+  // Close PDF modal
+  const closePDFModal = () => {
+    setShowPDFModal(false);
+    setPdfUrl("");
+  };
+
   return (
     <SafeAreaProvider>
       <SafeAreaView className="flex-1 bg-white ">
@@ -217,7 +305,7 @@ export default function CustomerRentals() {
               </View>
 
               <View className="flex-row gap-4">
-                <Pressable onPress={selectAll} hitSlop={12}>
+                <Pressable onPress={handleGenerateInvoice} hitSlop={12}>
                   <FontAwesome6 name="file-invoice" size={23} color="black" />
                 </Pressable>
                 <Pressable onPress={toggleMenu} hitSlop={12}>
@@ -514,6 +602,47 @@ export default function CustomerRentals() {
             </View>
           )}
         </ScrollView>
+
+        {/* PDF Viewer Modal */}
+        <Modal
+          visible={showPDFModal}
+          animationType="slide"
+          onRequestClose={closePDFModal}
+        >
+          <SafeAreaView className="flex-1 bg-white">
+            {/* Modal Header */}
+            <View className="flex-row items-center justify-between p-4 border-b border-gray-200 bg-white">
+              <Pressable onPress={closePDFModal} hitSlop={12}>
+                <Ionicons name="close" size={28} color="black" />
+              </Pressable>
+              <Text className="text-lg font-bold">Invoice Preview</Text>
+              <TouchableOpacity
+                onPress={handleDownloadPDF}
+                disabled={downloading}
+                className="bg-black px-4 py-2 rounded-lg"
+              >
+                {downloading ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <Text className="text-white font-semibold">Download</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            {/* PDF WebView */}
+            <WebView
+              source={{ uri: pdfUrl }}
+              style={{ flex: 1 }}
+              startInLoadingState={true}
+              renderLoading={() => (
+                <View className="flex-1 items-center justify-center">
+                  <ActivityIndicator size="large" color="#000" />
+                  <Text className="mt-4">Loading invoice...</Text>
+                </View>
+              )}
+            />
+          </SafeAreaView>
+        </Modal>
       </SafeAreaView>
     </SafeAreaProvider>
   );
