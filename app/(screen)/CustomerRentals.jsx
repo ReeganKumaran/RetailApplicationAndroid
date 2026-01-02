@@ -288,7 +288,10 @@ export default function CustomerRentals() {
         Platform.OS !== "android" ||
         (!NativeModules.ReactNativeBlobUtil && !NativeModules.RNFetchBlob && !turboModule)
       ) {
-        Alert.alert("Download Manager Unavailable", "Install a dev client build with react-native-blob-util to enable native downloads.");
+        Alert.alert(
+          "Download Manager Unavailable",
+          "Native downloads require a development build with react-native-blob-util.\n\nPlease use the Share button instead, or install the package:\n\nnpx expo install react-native-blob-util\nnpx expo prebuild\nnpx expo run:android"
+        );
         return;
       }
 
@@ -297,7 +300,10 @@ export default function CustomerRentals() {
         const module = require("react-native-blob-util");
         RNBlobUtil = module?.default ?? module;
       } catch (loadError) {
-        Alert.alert("Download Manager Unavailable", "Install a dev client build with react-native-blob-util to enable native downloads.");
+        Alert.alert(
+          "Download Manager Unavailable",
+          "Native downloads require a development build.\n\nPlease use the Share button instead to save the invoice."
+        );
         return;
       }
 
@@ -430,14 +436,14 @@ export default function CustomerRentals() {
                 </Text>
               </View>
 
-              <Pressable className="mr-3" onPress={toggleMenu} hitSlop={12}>
+              {/* <Pressable className="mr-3" onPress={toggleMenu} hitSlop={12}>
                 <EllipsisVertical color="#000" size={24} />
-              </Pressable>
+              </Pressable> */}
             </>
           )}
 
           {/* Backdrop only while visible */}
-          {showMenu && (
+          {/* {showMenu && (
             <Animated.View
               // covers the header area to catch outside taps
               style={{
@@ -452,10 +458,10 @@ export default function CustomerRentals() {
             >
               <Pressable style={{ flex: 1 }} onPress={animateOut} />
             </Animated.View>
-          )}
+          )} */}
 
           {/* Animated menu */}
-          {showMenu && (
+          {/* {showMenu && (
             <Animated.View
               style={{
                 position: "absolute",
@@ -481,19 +487,16 @@ export default function CustomerRentals() {
                 {
                   label: "Create Invoice",
                   onPress: () => {
-                    /* do something */
                   },
                 },
                 {
                   label: "Export as CSV",
                   onPress: () => {
-                    /* ... */
                   },
                 },
                 {
                   label: "Delete Selected",
                   onPress: () => {
-                    /* ... */
                   },
                 },
               ].map((item, i) => (
@@ -510,7 +513,7 @@ export default function CustomerRentals() {
                 </Pressable>
               ))}
             </Animated.View>
-          )}
+          )} */}
         </View>
         {/* Customer Summary Card */}
 
