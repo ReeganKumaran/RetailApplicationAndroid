@@ -97,8 +97,8 @@ export const validateRentalForm = (formData, showDeliveryAddress) => {
     }
 
     // Date Validation
-    if (!formData.deliveryDate) {
-        errors.deliveryDate = 'Delivery date is required';
+    if (!formData.deliveredDate) {
+        errors.deliveredDate = 'Delivery date is required';
         isValid = false;
     }
 

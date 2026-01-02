@@ -16,7 +16,7 @@ export default function AdvanceDetails() {
       quantity: "",
       advanceAmount: "",
     },
-    deliveryDate: "",
+    deliveredDate: "",
     returnDate: "",
     deliveryAddress: {
       street: "",
@@ -228,9 +228,9 @@ export default function AdvanceDetails() {
           <View className="flex-row gap-4">
             <View className="bg-white rounded-xl p-4 shadow-sm flex-1">
               <DatePicker
-                value={formData.deliveryDate}
+                value={formData.deliveredDate}
                 onDateChange={(date) =>
-                  setFormData({ ...formData, deliveryDate: date })
+                  setFormData({ ...formData, deliveredDate: date })
                 }
                 label="Delivery Date"
                 required={true}

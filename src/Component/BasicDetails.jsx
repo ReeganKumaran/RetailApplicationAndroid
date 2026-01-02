@@ -14,6 +14,7 @@ import {
 import { postRental, updateRental } from "../API/postApi";
 import { validateRentalForm } from "../helper/Validation";
 import DatePicker from "./DatePicker";
+import { router } from "expo-router";
 
 export default function BasicDetails({
   customerData,
@@ -37,7 +38,7 @@ export default function BasicDetails({
       quantity: dataSource?.itemDetail?.quantity?.toString() || (!isEditMode ? "100" : ""),
       advanceAmount: dataSource?.itemDetail?.advanceAmount?.toString() || (!isEditMode ? "200" : ""),
     },
-    deliveryDate: dataSource?.deliveryDate || "",
+    deliveredDate: dataSource?.deliveredDate || "",
     returnDate: dataSource?.returnDate || "",
     notes: dataSource?.notes || (!isEditMode ? "Test rental notes" : ""),
     deliveryAddress: {
@@ -98,10 +99,10 @@ export default function BasicDetails({
   };
 
   const handleSubmission = async () => {
-    // if (!validateForm()) {
-    //   showToast('Please fill in all required fields correctly');
-    //   return;
-    // }
+    if (!validateForm()) {
+      showToast('Please fill in all required fields correctly');
+      return;
+    }
 
     try {
       let res;
@@ -116,7 +117,7 @@ export default function BasicDetails({
 
       if (res.success) {
         showToast(isEditMode ? "Rental updated successfully! ✅" : "Rental added successfully! 📦");
-
+        router.back();
         if (!isEditMode) {
           // Only reset form for new rentals, not for updates
           setFormData(initialFormState);
@@ -124,7 +125,9 @@ export default function BasicDetails({
           setErrors({});
         }
       } else {
-        showToast(res.error || (isEditMode ? "Failed to update rental" : "Failed to add rental"));
+        // Extract error message from different possible formats
+        const errorMessage = res.error?.message || res.error || (isEditMode ? "Failed to update rental" : "Failed to add rental");
+        showToast(errorMessage);
       }
     } catch (_error) {
       showToast("An error occurred. Please try again.");
@@ -354,9 +357,9 @@ export default function BasicDetails({
           <View className="flex-row gap-4">
             <View className="bg-white rounded-xl p-4 flex flex-row justify-between  flex-1">
               <DatePicker
-                value={formData.deliveryDate}
+                value={formData.deliveredDate}
                 onDateChange={(date) =>
-                  setFormData({ ...formData, deliveryDate: date })
+                  setFormData({ ...formData, deliveredDate: date })
                 }
                 label="Delivery Date"
                 required={true}

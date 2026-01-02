@@ -178,7 +178,7 @@ export default function RentalDetails() {
               <View className="flex-row justify-between">
                 <Text className="text-gray-400">Delivery Date</Text>
                 <Text className="text-white">
-                  {formatDate(rental.deliveryDate)}
+                  {formatDate(rental.deliveredDate)}
                 </Text>
               </View>
               <View className="flex-row justify-between">

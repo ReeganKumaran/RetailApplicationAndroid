@@ -16,7 +16,6 @@ export const getRental = async ({customerId, option, limit = 10, page = 1 }) => 
     return error.response?.data || error.message;
   }
 };
-
 // export const getRentalsByCustomerId = async (customerId) => {
 //   try {
 //     const response = await api.get("/rentals", {

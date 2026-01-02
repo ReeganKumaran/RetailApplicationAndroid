@@ -27,8 +27,8 @@ import {
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { WebView } from 'react-native-webview';
 import { baseURL } from "../../src/API/APIEndpoint/APIEndpoint";
-import { generateInvoicePDF, getRental, previewInvoicePDF } from "../../src/API/getApi";
 import { getToken } from "../../src/API/Auth/token";
+import { generateInvoicePDF, getRental, previewInvoicePDF } from "../../src/API/getApi";
 import SegmentedToggle from "../../src/Component/SegmentedToggle";
 import { RentalListSkeleton } from "../../src/Component/SkeletonLoaders";
 import { formatDate, getStatusColor } from "../../src/utils/Formater";
@@ -629,9 +629,7 @@ export default function CustomerRentals() {
                       <View className="flex-row items-center">
                         <IndianRupee color="#ffffff" size={16} />
                         <Text className="text-white text-lg font-bold ml-1">
-                          {rental.itemDetail?.totalPrice ||
-                            rental.totalRent ||
-                            0}
+                          {(rental.itemDetail?.price || 0) * (rental.totalDays || 1)}
                         </Text>
                       </View>
                     </View>
