@@ -1,8 +1,8 @@
-// import forgotPassword from "../assets/images/cuate.svg";
+// import forgotPassword from "./images/cuate.svg";
 
 export const assets = {
-  logo: require("../assets/images/Logo.png"),
-  forgotPassword: require("../assets/images/cuate.svg"),
-  logoLight: require("../assets/images/logoLight.png"),
-  profile: require("../assets/images/profile.jpg"),
+  logo: require("./images/Logo.png"),
+  forgotPassword: require("./images/cuate.svg"),
+  logoLight: require("./images/Logo.png"),
+  profile: require("./images/profile.jpg"),
 };

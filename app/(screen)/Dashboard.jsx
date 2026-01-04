@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { Box, DollarSign, IndianRupee } from "lucide-react-native";
+import { Box, DollarSign, IndianRupee, Search } from "lucide-react-native";
 import {
   ActivityIndicator,
   Dimensions,
@@ -9,62 +9,61 @@ import {
   Text,
   View,
 } from "react-native";
-import { BarChart, LineChart } from "react-native-chart-kit";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback,  useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import { getCustomers, getRental } from "../../src/API/getApi";
 import { StatsCardSkeleton, ChartSkeleton } from "../../src/Component/SkeletonLoaders";
 
 const screenWidth = Dimensions.get("window").width;
-const chartWidth = screenWidth - 32; // padding
-const chartConfig = {
-  backgroundGradientFrom: "#000000ff",
-  backgroundGradientTo: "#410069ff",
-  // backgroundGradientFromOpacity: 0.8,
-  // backgroundGradientToOpacity: 0.8,
-  fillShadowGradient: "#6f4cafff", // bar fill color
-  fillShadowGradientOpacity: 1,
-  decimalPlaces: 2, // number of decimal places in y values
-  color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`, // axis label color
-  labelColor: (opacity = 1) => `rgba(200, 200, 200, ${opacity})`,
-  barPercentage: 0.3, // bar width (0–1)
+// const chartWidth = screenWidth - 32; // padding
+// const chartConfig = {
+//   backgroundGradientFrom: "#000000ff",
+//   backgroundGradientTo: "#410069ff",
+//   // backgroundGradientFromOpacity: 0.8,
+//   // backgroundGradientToOpacity: 0.8,
+//   fillShadowGradient: "#6f4cafff", // bar fill color
+//   fillShadowGradientOpacity: 1,
+//   decimalPlaces: 2, // number of decimal places in y values
+//   color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`, // axis label color
+//   labelColor: (opacity = 1) => `rgba(200, 200, 200, ${opacity})`,
+//   barPercentage: 0.3, // bar width (0–1)
 
-  propsForLabels: {
-    fontSize: 12,
-    fontWeight: "bold",
-  },
-  propsForBackgroundLines: {
-    strokeDasharray: "", // solid lines
-    strokeWidth: 0,
-    stroke: "#ccc",
-  },
-};
+//   propsForLabels: {
+//     fontSize: 12,
+//     fontWeight: "bold",
+//   },
+//   propsForBackgroundLines: {
+//     strokeDasharray: "", // solid lines
+//     strokeWidth: 0,
+//     stroke: "#ccc",
+//   },
+// };
 
-const lineData = {
-  labels: ["Mon", "Tue", "Wed", "Thu", "Fri"],
-  datasets: [
-    {
-      data: [12, 19, 9, 24, 16],
-      strokeWidth: 2,
-      borderRadius: 8,
-    },
-  ],
-};
+// const lineData = {
+//   labels: ["Mon", "Tue", "Wed", "Thu", "Fri"],
+//   datasets: [
+//     {
+//       data: [12, 19, 9, 24, 16],
+//       strokeWidth: 2,
+//       borderRadius: 8,
+//     },
+//   ],
+// };
 
-const barData = {
-  labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
-  datasets: [
-    {
-      data: [30, 45, 28, 80, 60, 70],
-    },
-  ],
-};
+// const barData = {
+//   labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+//   datasets: [
+//     {
+//       data: [30, 45, 28, 80, 60, 70],
+//     },
+//   ],
+// };
 
-const handleAddClient = () => {
-  router.push("/(screen)/AddClient");
-};
+// const handleAddClient = () => {
+//   router.push("/(screen)/AddClient");
+// };
 
 export default function Dashboard() {
   const [rental, setRental] = useState([]);
@@ -162,13 +161,28 @@ export default function Dashboard() {
       <SafeAreaProvider>
         <KeyboardAvoidingView className="flex-1" behavior="padding">
           <SafeAreaView className="flex-1">
+            {/* Custom Navbar */}
+            <View className="flex-row items-center justify-between px-4 py-4  border-b border-gray-200">
+              <Text className="text-2xl font-bold text-gray-900" style={{ lineHeight: 24 }}>SRK</Text>
+              <Pressable
+                onPress={() => {
+                  // Add your search functionality here
+                  console.log("Search pressed");
+                }}
+                hitSlop={12}
+                className="items-center justify-center"
+              >
+                <Search size={24} color="#000" strokeWidth={2} />
+              </Pressable>
+            </View>
+
             <View style={{ flex: 1 }}>
               {/* Scrollable Content */}
               <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }}>
                 {/* Skeleton Loading for Charts and Stats */}
                 {loading ? (
                   <View className="mt-2 flex flex-col gap-4">
-                    <ChartSkeleton />
+                    {/* <ChartSkeleton /> */}
                     <View className="flex flex-row gap-2 justify-between w-full">
                       <StatsCardSkeleton />
                       <StatsCardSkeleton />
@@ -177,7 +191,7 @@ export default function Dashboard() {
                   </View>
                 ) : (
                   <View className="mt-2 flex flex-col gap-4">
-                    <BarChart
+                    {/* <BarChart
                       data={lineData}
                       width={chartWidth}
                       height={220}
@@ -186,7 +200,7 @@ export default function Dashboard() {
                       barPercentage={0.7}
                       withVerticalLines={false}
                       style={{ borderRadius: 16, alignSelf: "center" }}
-                    />
+                    /> */}
                     <View className="flex flex-row gap-2 pe-4 justify-between w-full">
                     <View className="flex w-1/3 flex-row bg-gray-950 p-4 rounded-3xl ">
                       <Box color="#ffffff" />

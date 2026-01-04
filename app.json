@@ -1,10 +1,10 @@
 {
   "expo": {
     "name": "SRK",
-    "icon": "./assets/images/Logo.png",
+    "icon": "./assets/images/Icon.png",
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/Logo.png",
+        "foregroundImage": "./assets/images/Icon.png",
         "backgroundColor": "#FFFFFF"
       },
       "package": "com.reegankumaran.srk",
