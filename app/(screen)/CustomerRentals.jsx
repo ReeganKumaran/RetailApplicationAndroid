@@ -38,7 +38,7 @@ export default function CustomerRentals() {
   const [rentals, setRentals] = useState([]);
   const [allRentals, setAllRentals] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedFilter, setSelectedFilter] = useState(null);
+  const [selectedFilter, setSelectedFilter] = useState("All");
   const [showMenu, setShowMenu] = useState(false);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedRentals, setSelectedRentals] = useState([]);
@@ -419,9 +419,9 @@ export default function CustomerRentals() {
                 <Pressable onPress={handleGenerateInvoice} hitSlop={12}>
                   <FontAwesome6 name="file-invoice" size={23} color="black" />
                 </Pressable>
-                <Pressable onPress={toggleMenu} hitSlop={12}>
+                {/* <Pressable onPress={toggleMenu} hitSlop={12}>
                   <EllipsisVertical color="#383838ff" size={24} />
-                </Pressable>
+                </Pressable> */}
               </View>
             </>
           ) : (
@@ -579,7 +579,9 @@ export default function CustomerRentals() {
           <View className="mb-4 mx-3">
             <SegmentedToggle
               options={["All", "Pending", "Returned"]}
+              value={selectedFilter}
               onChange={(selectedOption) => {
+                setSelectedFilter(selectedOption);
                 filterRentals(selectedOption);
               }}
             />

@@ -1,13 +1,10 @@
-import React, { useState } from "react";
-import { View, Text, Pressable } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
 export default function SegmentedToggle({
   options = ["All", "Active", "Completed"],
-  initial = "All",
+  value = "All",
   onChange,
 }) {
-  const [value, setValue] = useState(initial);
-
   return (
     <View className="flex-row items-center bg-gray-200 rounded-full justify-around p-1">
       {options.map((opt) => {
@@ -16,13 +13,16 @@ export default function SegmentedToggle({
           <Pressable
             key={opt}
             onPress={() => {
-              setValue(opt);
               if (onChange) onChange(opt);
             }}
-            className={`px-4 py-2  rounded-full ${options.length === 2 ? "w-1/2" : "w-1/3"}  ${
-              selected ? "bg-black/80" : "bg-transparent"
-            }`}
-            android_ripple={{ color: "#e5e7eb", borderless: false }}
+            style={{
+              paddingHorizontal: 16,
+              paddingVertical: 8,
+              borderRadius: 9999,
+              width: options.length === 2 ? "50%" : "33.333%",
+              backgroundColor: selected ? "rgba(0, 0, 0, 0.8)" : "transparent",
+            }}
+            android_ripple={{ color: "#e5e7eb", borderless: true }}
           >
             <Text
               className={`text-sm text-center ${

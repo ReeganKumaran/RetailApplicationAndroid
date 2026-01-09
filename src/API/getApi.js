@@ -100,3 +100,18 @@ export const previewInvoicePDF = async (rentalIds) => {
         };
     }
 }
+
+export const getItems = async ({ page = 1, limit = null } = {}) => {
+    try {
+        const response = await api.get("/items", {
+            params: {
+                page,
+                limit: limit || undefined,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching items:", error.response?.data || error.message);
+        return error.response?.data || error.message;
+    }
+};

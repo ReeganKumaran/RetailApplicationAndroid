@@ -73,7 +73,7 @@ export default function AddClient() {
               <View className="p-[16px]">
                 <SegmentedToggle
                   options={["Basic", "Advance"]}
-                  initial="Basic"
+                  value={basicAdvanceToggle}
                   onChange={setBasicAdvanceToggle}
                 />
               </View>

@@ -1,8 +1,8 @@
+import { Ionicons } from "@expo/vector-icons";
+import { PlatformPressable } from "@react-navigation/elements";
 import { Tabs } from "expo-router";
 import { View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { PlatformPressable } from "@react-navigation/elements";
 import "../../global.css";
 
 const TabBarIcon = ({ name, color, size = 22 }) => (
@@ -79,9 +79,9 @@ export default function Layout() {
         }}
       />
       <Tabs.Screen
-        name="Satatus"
+        name="Inventory"
         options={{
-          title: "Status",
+          title: "Inventory",
           tabBarIcon: ({ color }) => (
             <TabBarIcon name="stats-chart" color={color} />
           ),
