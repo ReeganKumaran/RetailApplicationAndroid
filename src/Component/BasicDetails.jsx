@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Animated,
+  Keyboard,
   Platform,
   Pressable,
   ScrollView,
@@ -12,6 +13,7 @@ import {
   View,
 } from "react-native";
 import { postRental, updateRental } from "../API/postApi";
+import { getItems } from "../API/getApi";
 import { validateRentalForm } from "../helper/Validation";
 import DatePicker from "./DatePicker";
 import { router } from "expo-router";
@@ -27,20 +29,20 @@ export default function BasicDetails({
 
   // Memoize initial form state so it only changes when data sources change
   const initialFormState = useMemo(() => ({
-    customer: dataSource?.customer || dataSource?.customerName || (!isEditMode ? "Reegan" : ""),
-    phoneNumber: dataSource?.clientPhoneNumber || dataSource?.phoneNumber || dataSource?.customerDetail?.customerPhone || (!isEditMode ? "9344567890" : ""),
-    email: dataSource?.clientEmail || dataSource?.email || dataSource?.customerDetail?.customerEmail || (!isEditMode ? "reegan@example.com" : ""),
-    aadhar: dataSource?.clientAadhaar || dataSource?.aadhar || dataSource?.customerDetail?.customerAadhar || (!isEditMode ? "2345 6789 0123" : ""),
+    customer: dataSource?.customer || dataSource?.customerName || "",
+    phoneNumber: dataSource?.clientPhoneNumber || dataSource?.phoneNumber || dataSource?.customerDetail?.customerPhone || "",
+    email: dataSource?.clientEmail || dataSource?.email || dataSource?.customerDetail?.customerEmail || "",
+    aadhar: dataSource?.clientAadhaar || dataSource?.aadhar || dataSource?.customerDetail?.customerAadhar || "",
     itemDetail: {
-      name: dataSource?.itemDetail?.name || (!isEditMode ? "Party Wear Suit" : ""),
-      size: dataSource?.itemDetail?.size || (!isEditMode ? "3x2" : ""),
-      price: dataSource?.itemDetail?.price?.toString() || (!isEditMode ? "40" : ""),
-      quantity: dataSource?.itemDetail?.quantity?.toString() || (!isEditMode ? "100" : ""),
-      advanceAmount: dataSource?.itemDetail?.advanceAmount?.toString() || (!isEditMode ? "200" : ""),
+      name: dataSource?.itemDetail?.name || "",
+      size: dataSource?.itemDetail?.size || "",
+      price: dataSource?.itemDetail?.price?.toString() || "",
+      quantity: dataSource?.itemDetail?.quantity?.toString() || "",
+      advanceAmount: dataSource?.itemDetail?.advanceAmount?.toString() || "",
     },
     deliveredDate: dataSource?.deliveredDate || "",
     returnDate: dataSource?.returnDate || "",
-    notes: dataSource?.notes || (!isEditMode ? "Test rental notes" : ""),
+    notes: dataSource?.notes || "",
     deliveryAddress: {
       street: dataSource?.deliveryAddress?.street || "",
       city: dataSource?.deliveryAddress?.city || "",
@@ -50,12 +52,30 @@ export default function BasicDetails({
       landmark: dataSource?.deliveryAddress?.landmark || "",
       isPrimary: dataSource?.deliveryAddress?.isPrimary ?? true,
     },
-  }), [dataSource, isEditMode]);
+  }), [dataSource]);
 
   const [showDeliveryAddress, setShowDeliveryAddress] = useState(false);
   const slideAnimation = useRef(new Animated.Value(0)).current;
   const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState(initialFormState);
+  const [items, setItems] = useState([]);
+  const [showItemDropdown, setShowItemDropdown] = useState(false);
+  const [itemSearchQuery, setItemSearchQuery] = useState("");
+
+  // Fetch items on component mount
+  useEffect(() => {
+    const fetchItems = async () => {
+      try {
+        const response = await getItems({ page: 1, limit: null });
+        if (response?.data?.items) {
+          setItems(response.data.items);
+        }
+      } catch (error) {
+        console.error("Error fetching items:", error);
+      }
+    };
+    fetchItems();
+  }, []);
 
   // Reset form when data source or edit mode changes
   useEffect(() => {
@@ -63,6 +83,32 @@ export default function BasicDetails({
     setErrors({});
     setShowDeliveryAddress(false);
   }, [initialFormState, isEditMode]);
+
+  // Filter items based on search query
+  const filteredItems = items.filter((item) => {
+    if (!itemSearchQuery.trim()) return true;
+    const query = itemSearchQuery.toLowerCase();
+    return item.name.toLowerCase().includes(query);
+  });
+
+  // Handle item selection from dropdown
+  const handleItemSelect = (item) => {
+    console.log("Item selected:", item);
+    const updatedFormData = {
+      ...formData,
+      itemDetail: {
+        ...formData.itemDetail,
+        name: item.name,
+        price: item.pricing.unitPrice.toString(),
+        size: `${item.dimensions.width}x${item.dimensions.height} ${item.dimensions.unit}`,
+      },
+    };
+    console.log("Updated form data:", updatedFormData.itemDetail);
+    setFormData(updatedFormData);
+    setItemSearchQuery(""); // Clear search query
+    setShowItemDropdown(false);
+    Keyboard.dismiss();
+  };
 
   const validateForm = () => {
     const { isValid, errors: newErrors } = validateRentalForm(
@@ -146,33 +192,40 @@ export default function BasicDetails({
             <Text className="font-semibold text-base text-gray-700 mb-2">
               Customer Name <Text className="text-red-500">*</Text>
             </Text>
-            <Pressable
-              onPress={() => {
-                showToast(
-                  "Customer information cannot be edited for existing customers"
-                );
-              }}
-            >
-              <View pointerEvents="none">
-                <TextInput
-                  className={`bg-gray-50 border ${errors.customer ? "border-red-500" : "border-gray-200"} rounded-lg p-3 ${disableCustomerInformation ? "bg-gray-100" : ""} text-black`}
-                  placeholder="Enter Customer Name"
-                  placeholderTextColor="#999"
-                  autoCapitalize="words"
-                  returnKeyType="next"
-                  value={formData.customer}
-                  editable={!disableCustomerInformation}
-                  onChangeText={(text) => {
-                    if (!disableCustomerInformation) {
-                      setFormData({ ...formData, customer: text });
-                      if (errors.customer) {
-                        setErrors({ ...errors, customer: "" });
-                      }
-                    }
-                  }}
-                />
-              </View>
-            </Pressable>
+            {disableCustomerInformation ? (
+              <Pressable
+                onPress={() => {
+                  showToast(
+                    "Customer information cannot be edited for existing customers"
+                  );
+                }}
+              >
+                <View pointerEvents="none">
+                  <TextInput
+                    className="bg-gray-100 border border-gray-200 rounded-lg p-3 text-black"
+                    placeholder="Enter Customer Name"
+                    placeholderTextColor="#999"
+                    value={formData.customer}
+                    editable={false}
+                  />
+                </View>
+              </Pressable>
+            ) : (
+              <TextInput
+                className={`bg-gray-50 border ${errors.customer ? "border-red-500" : "border-gray-200"} rounded-lg p-3 text-black`}
+                placeholder="Enter Customer Name"
+                placeholderTextColor="#999"
+                autoCapitalize="words"
+                returnKeyType="next"
+                value={formData.customer}
+                onChangeText={(text) => {
+                  setFormData({ ...formData, customer: text });
+                  if (errors.customer) {
+                    setErrors({ ...errors, customer: "" });
+                  }
+                }}
+              />
+            )}
             {errors.customer && (
               <Text className="text-red-500 text-sm mt-1">
                 {errors.customer}
@@ -184,59 +237,73 @@ export default function BasicDetails({
               <Text className="font-semibold text-base text-gray-700 mb-2">
                 Phone Number <Text className="text-red-500">*</Text>
               </Text>
-              <Pressable
-                onPress={() => {
-                  showToast(
-                    "Customer information cannot be edited for existing customers"
-                  );
-                }}
-              >
-                <View pointerEvents="none">
-                  <TextInput
-                    className={`bg-gray-50 border border-gray-200 rounded-lg p-3 ${disableCustomerInformation ? "bg-gray-100" : ""} text-black`}
-                    placeholder="Phone"
-                    placeholderTextColor="#999"
-                    keyboardType="phone-pad"
-                    returnKeyType="next"
-                    value={formData.phoneNumber}
-                    editable={!disableCustomerInformation}
-                    onChangeText={(text) => {
-                      if (!disableCustomerInformation) {
-                        setFormData({ ...formData, phoneNumber: text });
-                      }
-                    }}
-                  />
-                </View>
-              </Pressable>
+              {disableCustomerInformation ? (
+                <Pressable
+                  onPress={() => {
+                    showToast(
+                      "Customer information cannot be edited for existing customers"
+                    );
+                  }}
+                >
+                  <View pointerEvents="none">
+                    <TextInput
+                      className="bg-gray-100 border border-gray-200 rounded-lg p-3 text-black"
+                      placeholder="Phone"
+                      placeholderTextColor="#999"
+                      value={formData.phoneNumber}
+                      editable={false}
+                    />
+                  </View>
+                </Pressable>
+              ) : (
+                <TextInput
+                  className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-black"
+                  placeholder="Phone"
+                  placeholderTextColor="#999"
+                  keyboardType="phone-pad"
+                  returnKeyType="next"
+                  value={formData.phoneNumber}
+                  onChangeText={(text) => {
+                    setFormData({ ...formData, phoneNumber: text });
+                  }}
+                />
+              )}
             </View>
             <View className="bg-white rounded-xl p-4  flex-1">
               <Text className="font-semibold text-base text-gray-700 mb-2">
                 Email
               </Text>
-              <Pressable
-                onPress={() => {
-                  showToast(
-                    "Customer information cannot be edited for existing customers"
-                  );
-                }}
-              >
-                <View pointerEvents="none">
-                  <TextInput
-                    className={`bg-gray-50 border border-gray-200 rounded-lg p-3 ${disableCustomerInformation ? "bg-gray-100" : ""} text-black`}
-                    placeholder="Email"
-                    placeholderTextColor="#999"
-                    keyboardType="email-address"
-                    returnKeyType="next"
-                    value={formData.email}
-                    editable={!disableCustomerInformation}
-                    onChangeText={(text) => {
-                      if (!disableCustomerInformation) {
-                        setFormData({ ...formData, email: text });
-                      }
-                    }}
-                  />
-                </View>
-              </Pressable>
+              {disableCustomerInformation ? (
+                <Pressable
+                  onPress={() => {
+                    showToast(
+                      "Customer information cannot be edited for existing customers"
+                    );
+                  }}
+                >
+                  <View pointerEvents="none">
+                    <TextInput
+                      className="bg-gray-100 border border-gray-200 rounded-lg p-3 text-black"
+                      placeholder="Email"
+                      placeholderTextColor="#999"
+                      value={formData.email}
+                      editable={false}
+                    />
+                  </View>
+                </Pressable>
+              ) : (
+                <TextInput
+                  className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-black"
+                  placeholder="Email"
+                  placeholderTextColor="#999"
+                  keyboardType="email-address"
+                  returnKeyType="next"
+                  value={formData.email}
+                  onChangeText={(text) => {
+                    setFormData({ ...formData, email: text });
+                  }}
+                />
+              )}
             </View>
           </View>
         </View>
@@ -250,20 +317,94 @@ export default function BasicDetails({
             <Text className="font-semibold text-base text-gray-700 mb-2">
               Item Name <Text className="text-red-500">*</Text>
             </Text>
-            <TextInput
-              className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-black"
-              placeholder="Enter Item Name"
-              placeholderTextColor="#999"
-              autoCapitalize="words"
-              returnKeyType="next"
-              value={formData.itemDetail.name}
-              onChangeText={(text) =>
-                setFormData({
-                  ...formData,
-                  itemDetail: { ...formData.itemDetail, name: text },
-                })
-              }
-            />
+            <View style={{ position: 'relative', zIndex: 1000 }}>
+              {formData.itemDetail.name && !showItemDropdown ? (
+                <Pressable
+                  onPress={() => {
+                    setItemSearchQuery("");
+                    setFormData({
+                      ...formData,
+                      itemDetail: {
+                        ...formData.itemDetail,
+                        name: "",
+                        price: "",
+                        size: "",
+                      },
+                    });
+                  }}
+                >
+                  <View className="bg-gray-50 border border-gray-200 rounded-lg p-3 flex-row justify-between items-center">
+                    <Text className="text-black text-base">{formData.itemDetail.name}</Text>
+                    <Text className="text-gray-400">✕</Text>
+                  </View>
+                </Pressable>
+              ) : (
+                <TextInput
+                  className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-black"
+                  placeholder="Search items from inventory..."
+                  placeholderTextColor="#999"
+                  autoCapitalize="words"
+                  returnKeyType="next"
+                  value={itemSearchQuery}
+                  onChangeText={(text) => {
+                    setItemSearchQuery(text);
+                    setShowItemDropdown(text.length > 0);
+                  }}
+                  onFocus={() => {
+                    setShowItemDropdown(true);
+                  }}
+                  autoFocus={!formData.itemDetail.name}
+                />
+              )}
+              {showItemDropdown && filteredItems.length > 0 && (
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    marginTop: 4,
+                    backgroundColor: 'white',
+                    borderWidth: 1,
+                    borderColor: '#e5e7eb',
+                    borderRadius: 8,
+                    maxHeight: 200,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 8,
+                    elevation: 5,
+                    zIndex: 1000,
+                  }}
+                >
+                  <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="always">
+                    {filteredItems.map((item, index) => (
+                      <TouchableOpacity
+                        key={item._id}
+                        onPress={() => handleItemSelect(item)}
+                        activeOpacity={0.7}
+                        style={{
+                          padding: 12,
+                          borderBottomWidth: index < filteredItems.length - 1 ? 1 : 0,
+                          borderBottomColor: '#f3f4f6',
+                          backgroundColor: 'white',
+                        }}
+                      >
+                        <Text style={{ fontSize: 16, fontWeight: '500', color: '#111827' }}>
+                          {item.name}
+                        </Text>
+                        <Text style={{ fontSize: 14, color: '#6b7280', marginTop: 2 }}>
+                          ₹{item.pricing.unitPrice} • {item.dimensions.width}x{item.dimensions.height} {item.dimensions.unit}
+                        </Text>
+                        <Text style={{ fontSize: 12, color: '#9ca3af', marginTop: 2 }}>
+                          Available: {item.inventory.availableQuantity}/{item.inventory.totalQuantity}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
+            </View>
           </View>
           <View className="flex-row gap-4 mb-4">
             <View className="bg-white rounded-xl p-4  flex-1">
@@ -364,10 +505,9 @@ export default function BasicDetails({
                 label="Delivery Date"
                 required={true}
                 placeholder="Select Delivery Date"
-
               />
-            {/* </View> */}
-            {/* <View className="bg-white rounded-xl p-2  flex-1"> */}
+            </View>
+            <View className="bg-white rounded-xl p-2  flex-1">
               <DatePicker
                 value={formData.returnDate}
                 onDateChange={(date) =>
