@@ -19,6 +19,7 @@ import { getItems } from "../API/getApi";
 import { validateRentalForm } from "../helper/Validation";
 import DatePicker from "./DatePicker";
 import { router, useFocusEffect } from "expo-router";
+import { ArrowLeft, X } from "lucide-react-native";
 export default function BasicDetails({
   customerData,
   rentalData,
@@ -77,7 +78,8 @@ export default function BasicDetails({
   const [selectedItemId, setSelectedItemId] = useState(null);
   const [showItemModal, setShowItemModal] = useState(false);
   const [itemSearchQuery, setItemSearchQuery] = useState("");
-
+  const [totalAvailableItems, setTotalAvailableItems] = useState("");
+  const lastToastTimeRef = useRef(0);
   // Fetch items on component mount
 
   useFocusEffect(
@@ -93,9 +95,11 @@ export default function BasicDetails({
         }
       };
       fetchItems();
-    }, []) 
+    }, [])
   );
-
+  useEffect(() => {
+    console.log("Form Data Updated:", formData);
+  }, [formData]); 
   // Reset form when data source or edit mode changes
   useEffect(() => {
     setFormData(initialFormState);
@@ -129,12 +133,13 @@ export default function BasicDetails({
   // Handle item selection from dropdown
   const handleItemSelect = (item) => {
     console.log("Item selected:", item);
-
+    setTotalAvailableItems(item.inventory.availableQuantity);
     setSelectedItemId(item._id);
     const updatedFormData = {
       ...formData,
       itemDetail: {
         ...formData.itemDetail,
+        itemId: item._id, // Add itemId for backend
         name: item.name,
         price: item.pricing.unitPrice.toString(),
         size: `${item.dimensions.width}x${item.dimensions.height} ${item.dimensions.unit}`,
@@ -170,6 +175,15 @@ export default function BasicDetails({
   });
 
   const showToast = (message) => {
+    const now = Date.now();
+
+    // Block if last toast was shown less than 1.5 seconds ago
+    if (now - lastToastTimeRef.current < 1500) {
+      return;
+    }
+
+    lastToastTimeRef.current = now;
+
     if (Platform.OS === "android") {
       ToastAndroid.showWithGravity(
         message,
@@ -391,7 +405,8 @@ export default function BasicDetails({
               <View style={{ flex: 1, backgroundColor: "white" }}>
                 <View
                   style={{
-                    padding: 16,
+                    paddingHorizontal: 16,
+                    marginTop: 30,
                     borderBottomWidth: 1,
                     borderBottomColor: "#e5e7eb",
                   }}
@@ -400,33 +415,37 @@ export default function BasicDetails({
                     style={{
                       flexDirection: "row",
                       alignItems: "center",
-                      marginBottom: 12,
+                      marginBottom: 6,
                     }}
                   >
                     <TouchableOpacity
                       onPress={() => setShowItemModal(false)}
                       style={{ marginRight: 12 }}
                     >
-                      <Text style={{ fontSize: 18 }}>✕</Text>
+                      <Text style={{ fontSize: 18 }}>
+                        <ArrowLeft />
+                      </Text>
                     </TouchableOpacity>
-                    <Text style={{ fontSize: 18, fontWeight: "600" }}>
+                    {/* <Text style={{ fontSize: 18, fontWeight: "600" }}>
                       Select Item
-                    </Text>
+                    </Text> */}
+
+                    <TextInput
+                      style={{
+                        // height: "100%"
+                        flex: 1,
+                        borderWidth: 1,
+                        borderColor: "#e5e7eb",
+                        borderRadius: 50,
+                        paddingHorizontal: 12,
+                        fontSize: 16,
+                      }}
+                      placeholder="Search items..."
+                      value={itemSearchQuery}
+                      onChangeText={setItemSearchQuery}
+                      autoFocus
+                    />
                   </View>
-                  <TextInput
-                    style={{
-                      height: 45,
-                      borderWidth: 1,
-                      borderColor: "#e5e7eb",
-                      borderRadius: 8,
-                      paddingHorizontal: 12,
-                      fontSize: 16,
-                    }}
-                    placeholder="Search items..."
-                    value={itemSearchQuery}
-                    onChangeText={setItemSearchQuery}
-                    autoFocus
-                  />
                 </View>
                 <FlatList
                   data={filteredItems}
@@ -493,9 +512,16 @@ export default function BasicDetails({
               />
             </View>
             <View className="bg-white rounded-xl p-4  flex-1">
-              <Text className="font-semibold text-base text-gray-700 mb-2">
-                Quantity <Text className="text-red-500">*</Text>
-              </Text>
+              <View className="flex-row justify-between items-center">
+                <Text className="font-semibold text-base text-gray-700 mb-2">
+                  Quantity <Text className="text-red-500">*</Text>
+                </Text>
+                <Text className="font-semibold text-base text-gray-700 mb-2">
+                  {totalAvailableItems || "NA"}/
+                  {formData.itemDetail.quantity || 0}
+                </Text>
+              </View>
+
               <TextInput
                 className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-black"
                 placeholder="Qty"
@@ -503,12 +529,16 @@ export default function BasicDetails({
                 keyboardType="numeric"
                 returnKeyType="next"
                 value={formData.itemDetail.quantity}
-                onChangeText={(text) =>
-                  setFormData({
-                    ...formData,
-                    itemDetail: { ...formData.itemDetail, quantity: text },
-                  })
-                }
+                onChangeText={(text) => {
+                  if (Number(text) <= Number(totalAvailableItems)) {
+                    setFormData({
+                      ...formData,
+                      itemDetail: { ...formData.itemDetail, quantity: text },
+                    });
+                  } else {
+                    showToast("Quantity exceeds available items");
+                  }
+                }}
               />
             </View>
           </View>
@@ -533,7 +563,8 @@ export default function BasicDetails({
             </View>
             <View className="flex-1">
               <Text className="font-semibold text-base text-gray-700 mb-2">
-                Advance Amount <Text className="text-red-500">*</Text>
+                Advance Amount
+                {/* <Text className="text-red-500">*</Text> */}
               </Text>
               <TextInput
                 className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-black"

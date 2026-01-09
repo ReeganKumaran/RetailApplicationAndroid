@@ -207,7 +207,7 @@ export default function Inventory() {
         </View>
 
         {/* Content */}
-        <ScrollView className="flex-1 px-4 py-4">
+        <ScrollView className="flex-1 px-4 py-4 ">
           {loading ? (
             <View className="flex-1 justify-center items-center py-20">
               <ActivityIndicator size="large" color="#000" />
@@ -234,7 +234,7 @@ export default function Inventory() {
               </Text>
             </View>
           ) : (
-            <View className="gap-4">
+            <View className="gap-4 mb-8">
               {items.map((item, idx) => (
                 <Pressable
                   key={item._id || idx}
