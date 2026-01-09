@@ -3,7 +3,6 @@ import { useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { KeyboardAvoidingView, Platform, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import {
   useAnimatedStyle,
   useSharedValue,
@@ -46,30 +45,23 @@ export default function AddClient() {
       console.error("Error parsing customer data:", e);
     }
   }
-  
+
+  // If disableEdit comes as "true"/"false" string from params, normalize:
+  const disableCustomerInformation =
+    typeof disableEdit === "string"
+      ? disableEdit === "true"
+      : !!disableEdit;
+
   return (
-    <GestureHandlerRootView className="flex-1  ">
+    <GestureHandlerRootView className="flex-1">
       <SafeAreaProvider>
-        <SafeAreaView className="flex-1">
-          {/* Optional: Keep KAV for iOS bounce + statusbar spacing */}
+        <SafeAreaView className="flex-1 bg-gray-50">
           <KeyboardAvoidingView
             style={{ flex: 1 }}
             behavior={Platform.OS === "ios" ? "padding" : undefined}
           >
-            <KeyboardAwareScrollView
-              style={{ flex: 1 }}
-              contentContainerStyle={{
-                flexGrow: 1,
-                padding: 0,
-                paddingBottom: fabBottom + 16,
-              }}
-              enableOnAndroid
-              extraScrollHeight={160}
-              keyboardOpeningTime={0}
-              keyboardShouldPersistTaps="handled"
-              scrollToOverflowEnabled
-              className="bg-gray-50"
-            >
+            <View style={{ flex: 1 }}>
+              {/* Toggle Header (non-scroll) */}
               <View className="p-[16px]">
                 <SegmentedToggle
                   options={["Basic", "Advance"]}
@@ -77,29 +69,23 @@ export default function AddClient() {
                   onChange={setBasicAdvanceToggle}
                 />
               </View>
-              <View className="h-4" />
-              {basicAdvanceToggle === "Basic" ? (
-                <BasicDetails
-                  customerData={parsedCustomerData}
-                  disableCustomerInformation={disableEdit}
-                  isEditMode={false}
-                />
-              ) : (
-                <AdvanceDetails />
-              )}
-              {/* <AdvanceDetails /> */}
-            </KeyboardAwareScrollView>
-          </KeyboardAvoidingView>
 
-          {/* <TouchableOpacity
-            onPress={() => router.push("/(screen)/Dashboard")}
-            className="absolute rounded-full z-50 p-5 bg-black/40"
-            style={{ right: 20, bottom: fabBottom }}
-          >
-            <Animated.View style={animation}>
-              <Plus color="#ffffff" />
-            </Animated.View>
-          </TouchableOpacity> */}
+              <View className="h-4" />
+
+              {/* Content – BasicDetails handles its own scrolling via FlatList */}
+              <View style={{ flex: 1 }}>
+                {basicAdvanceToggle === "Basic" ? (
+                  <BasicDetails
+                    customerData={parsedCustomerData}
+                    disableCustomerInformation={disableCustomerInformation}
+                    isEditMode={false}
+                  />
+                ) : (
+                  <AdvanceDetails />
+                )}
+              </View>
+            </View>
+          </KeyboardAvoidingView>
         </SafeAreaView>
       </SafeAreaProvider>
     </GestureHandlerRootView>

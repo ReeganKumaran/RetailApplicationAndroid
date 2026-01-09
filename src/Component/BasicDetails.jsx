@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Animated,
+  FlatList,
   Keyboard,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -16,8 +18,7 @@ import { postRental, updateRental } from "../API/postApi";
 import { getItems } from "../API/getApi";
 import { validateRentalForm } from "../helper/Validation";
 import DatePicker from "./DatePicker";
-import { router } from "expo-router";
-
+import { router, useFocusEffect } from "expo-router";
 export default function BasicDetails({
   customerData,
   rentalData,
@@ -27,73 +28,109 @@ export default function BasicDetails({
   // Use rentalData if available (edit mode), otherwise use customerData
   const dataSource = rentalData || customerData;
 
-  // Memoize initial form state so it only changes when data sources change
-  const initialFormState = useMemo(() => ({
-    customer: dataSource?.customer || dataSource?.customerName || "",
-    phoneNumber: dataSource?.clientPhoneNumber || dataSource?.phoneNumber || dataSource?.customerDetail?.customerPhone || "",
-    email: dataSource?.clientEmail || dataSource?.email || dataSource?.customerDetail?.customerEmail || "",
-    aadhar: dataSource?.clientAadhaar || dataSource?.aadhar || dataSource?.customerDetail?.customerAadhar || "",
-    itemDetail: {
-      name: dataSource?.itemDetail?.name || "",
-      size: dataSource?.itemDetail?.size || "",
-      price: dataSource?.itemDetail?.price?.toString() || "",
-      quantity: dataSource?.itemDetail?.quantity?.toString() || "",
-      advanceAmount: dataSource?.itemDetail?.advanceAmount?.toString() || "",
-    },
-    deliveredDate: dataSource?.deliveredDate || "",
-    returnDate: dataSource?.returnDate || "",
-    notes: dataSource?.notes || "",
-    deliveryAddress: {
-      street: dataSource?.deliveryAddress?.street || "",
-      city: dataSource?.deliveryAddress?.city || "",
-      state: dataSource?.deliveryAddress?.state || "",
-      postalCode: dataSource?.deliveryAddress?.postalCode || "",
-      country: dataSource?.deliveryAddress?.country || "",
-      landmark: dataSource?.deliveryAddress?.landmark || "",
-      isPrimary: dataSource?.deliveryAddress?.isPrimary ?? true,
-    },
-  }), [dataSource]);
+  const initialFormState = useMemo(
+    () => ({
+      customer: dataSource?.customer || dataSource?.customerName || "",
+      phoneNumber:
+        dataSource?.clientPhoneNumber ||
+        dataSource?.phoneNumber ||
+        dataSource?.customerDetail?.customerPhone ||
+        "",
+      email:
+        dataSource?.clientEmail ||
+        dataSource?.email ||
+        dataSource?.customerDetail?.customerEmail ||
+        "",
+      aadhar:
+        dataSource?.clientAadhaar ||
+        dataSource?.aadhar ||
+        dataSource?.customerDetail?.customerAadhar ||
+        "",
+      itemDetail: {
+        name: dataSource?.itemDetail?.name || "",
+        size: dataSource?.itemDetail?.size || "",
+        price: dataSource?.itemDetail?.price?.toString() || "",
+        quantity: dataSource?.itemDetail?.quantity?.toString() || "",
+        advanceAmount: dataSource?.itemDetail?.advanceAmount?.toString() || "",
+      },
+      deliveredDate: dataSource?.deliveredDate || "",
+      returnDate: dataSource?.returnDate || "",
+      notes: dataSource?.notes || "",
+      deliveryAddress: {
+        street: dataSource?.deliveryAddress?.street || "",
+        city: dataSource?.deliveryAddress?.city || "",
+        state: dataSource?.deliveryAddress?.state || "",
+        postalCode: dataSource?.deliveryAddress?.postalCode || "",
+        country: dataSource?.deliveryAddress?.country || "",
+        landmark: dataSource?.deliveryAddress?.landmark || "",
+        isPrimary: dataSource?.deliveryAddress?.isPrimary ?? true,
+      },
+    }),
+    [dataSource]
+  );
 
   const [showDeliveryAddress, setShowDeliveryAddress] = useState(false);
   const slideAnimation = useRef(new Animated.Value(0)).current;
   const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState(initialFormState);
   const [items, setItems] = useState([]);
-  const [showItemDropdown, setShowItemDropdown] = useState(false);
+  const [selectedItemId, setSelectedItemId] = useState(null);
+  const [showItemModal, setShowItemModal] = useState(false);
   const [itemSearchQuery, setItemSearchQuery] = useState("");
 
   // Fetch items on component mount
-  useEffect(() => {
-    const fetchItems = async () => {
-      try {
-        const response = await getItems({ page: 1, limit: null });
-        if (response?.data?.items) {
-          setItems(response.data.items);
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchItems = async () => {
+        try {
+          const response = await getItems({ page: 1, limit: null });
+          if (response?.data?.items) {
+            setItems(response.data.items);
+          }
+        } catch (error) {
+          console.error("Error fetching items:", error);
         }
-      } catch (error) {
-        console.error("Error fetching items:", error);
-      }
-    };
-    fetchItems();
-  }, []);
+      };
+      fetchItems();
+    }, []) 
+  );
 
   // Reset form when data source or edit mode changes
   useEffect(() => {
     setFormData(initialFormState);
     setErrors({});
     setShowDeliveryAddress(false);
+    setSelectedItemId(null);
   }, [initialFormState, isEditMode]);
 
-  // Filter items based on search query
+  useEffect(() => {
+    if (!items.length) return;
+    if (!formData.itemDetail.name) {
+      if (selectedItemId) {
+        setSelectedItemId(null);
+      }
+      return;
+    }
+    const matchedItem = items.find(
+      (item) => item.name === formData.itemDetail.name
+    );
+    if (matchedItem && matchedItem._id !== selectedItemId) {
+      setSelectedItemId(matchedItem._id);
+    }
+  }, [items, formData.itemDetail.name, selectedItemId]);
+
+  // Filter items based on search
   const filteredItems = items.filter((item) => {
-    if (!itemSearchQuery.trim()) return true;
-    const query = itemSearchQuery.toLowerCase();
-    return item.name.toLowerCase().includes(query);
+    if (!itemSearchQuery) return true;
+    return item.name.toLowerCase().includes(itemSearchQuery.toLowerCase());
   });
 
   // Handle item selection from dropdown
   const handleItemSelect = (item) => {
     console.log("Item selected:", item);
+
+    setSelectedItemId(item._id);
     const updatedFormData = {
       ...formData,
       itemDetail: {
@@ -105,8 +142,8 @@ export default function BasicDetails({
     };
     console.log("Updated form data:", updatedFormData.itemDetail);
     setFormData(updatedFormData);
-    setItemSearchQuery(""); // Clear search query
-    setShowItemDropdown(false);
+    setShowItemModal(false);
+    setItemSearchQuery("");
     Keyboard.dismiss();
   };
 
@@ -146,7 +183,7 @@ export default function BasicDetails({
 
   const handleSubmission = async () => {
     if (!validateForm()) {
-      showToast('Please fill in all required fields correctly');
+      showToast("Please fill in all required fields correctly");
       return;
     }
 
@@ -154,25 +191,28 @@ export default function BasicDetails({
       let res;
 
       if (isEditMode && rentalData?._id) {
-        // Update existing rental
         res = await updateRental(rentalData._id, formData);
       } else {
-        // Create new rental
         res = await postRental(formData);
       }
 
       if (res.success) {
-        showToast(isEditMode ? "Rental updated successfully! ✅" : "Rental added successfully! 📦");
+        showToast(
+          isEditMode
+            ? "Rental updated successfully! ✅"
+            : "Rental added successfully! 📦"
+        );
         router.back();
         if (!isEditMode) {
-          // Only reset form for new rentals, not for updates
           setFormData(initialFormState);
           setShowDeliveryAddress(false);
           setErrors({});
         }
       } else {
-        // Extract error message from different possible formats
-        const errorMessage = res.error?.message || res.error || (isEditMode ? "Failed to update rental" : "Failed to add rental");
+        const errorMessage =
+          res.error?.message ||
+          res.error ||
+          (isEditMode ? "Failed to update rental" : "Failed to add rental");
         showToast(errorMessage);
       }
     } catch (_error) {
@@ -180,8 +220,8 @@ export default function BasicDetails({
     }
   };
 
-  return (
-    <ScrollView className="flex-1 bg-gray-50">
+  const renderForm = () => (
+    <View className="flex-1 bg-gray-50">
       <View className="p-4">
         {/* Customer Information Section */}
         <View className="mb-6">
@@ -212,7 +252,9 @@ export default function BasicDetails({
               </Pressable>
             ) : (
               <TextInput
-                className={`bg-gray-50 border ${errors.customer ? "border-red-500" : "border-gray-200"} rounded-lg p-3 text-black`}
+                className={`bg-gray-50 border ${
+                  errors.customer ? "border-red-500" : "border-gray-200"
+                } rounded-lg p-3 text-black`}
                 placeholder="Enter Customer Name"
                 placeholderTextColor="#999"
                 autoCapitalize="words"
@@ -317,94 +359,118 @@ export default function BasicDetails({
             <Text className="font-semibold text-base text-gray-700 mb-2">
               Item Name <Text className="text-red-500">*</Text>
             </Text>
-            <View style={{ position: 'relative', zIndex: 1000 }}>
-              {formData.itemDetail.name && !showItemDropdown ? (
-                <Pressable
-                  onPress={() => {
-                    setItemSearchQuery("");
-                    setFormData({
-                      ...formData,
-                      itemDetail: {
-                        ...formData.itemDetail,
-                        name: "",
-                        price: "",
-                        size: "",
-                      },
-                    });
-                  }}
-                >
-                  <View className="bg-gray-50 border border-gray-200 rounded-lg p-3 flex-row justify-between items-center">
-                    <Text className="text-black text-base">{formData.itemDetail.name}</Text>
-                    <Text className="text-gray-400">✕</Text>
-                  </View>
-                </Pressable>
-              ) : (
-                <TextInput
-                  className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-black"
-                  placeholder="Search items from inventory..."
-                  placeholderTextColor="#999"
-                  autoCapitalize="words"
-                  returnKeyType="next"
-                  value={itemSearchQuery}
-                  onChangeText={(text) => {
-                    setItemSearchQuery(text);
-                    setShowItemDropdown(text.length > 0);
-                  }}
-                  onFocus={() => {
-                    setShowItemDropdown(true);
-                  }}
-                  autoFocus={!formData.itemDetail.name}
-                />
-              )}
-              {showItemDropdown && filteredItems.length > 0 && (
+            <Pressable
+              onPress={() => setShowItemModal(true)}
+              style={{
+                height: 50,
+                borderColor: "#e5e7eb",
+                borderWidth: 1,
+                borderRadius: 8,
+                paddingHorizontal: 12,
+                backgroundColor: "#f9fafb",
+                justifyContent: "center",
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 16,
+                  color: formData.itemDetail.name ? "#111827" : "#9ca3af",
+                }}
+              >
+                {formData.itemDetail.name || "Select item from inventory..."}
+              </Text>
+            </Pressable>
+
+            {/* Item Selection Modal */}
+            <Modal
+              visible={showItemModal}
+              animationType="slide"
+              transparent={false}
+              onRequestClose={() => setShowItemModal(false)}
+            >
+              <View style={{ flex: 1, backgroundColor: "white" }}>
                 <View
                   style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: 0,
-                    right: 0,
-                    marginTop: 4,
-                    backgroundColor: 'white',
-                    borderWidth: 1,
-                    borderColor: '#e5e7eb',
-                    borderRadius: 8,
-                    maxHeight: 200,
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.1,
-                    shadowRadius: 8,
-                    elevation: 5,
-                    zIndex: 1000,
+                    padding: 16,
+                    borderBottomWidth: 1,
+                    borderBottomColor: "#e5e7eb",
                   }}
                 >
-                  <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="always">
-                    {filteredItems.map((item, index) => (
-                      <TouchableOpacity
-                        key={item._id}
-                        onPress={() => handleItemSelect(item)}
-                        activeOpacity={0.7}
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      marginBottom: 12,
+                    }}
+                  >
+                    <TouchableOpacity
+                      onPress={() => setShowItemModal(false)}
+                      style={{ marginRight: 12 }}
+                    >
+                      <Text style={{ fontSize: 18 }}>✕</Text>
+                    </TouchableOpacity>
+                    <Text style={{ fontSize: 18, fontWeight: "600" }}>
+                      Select Item
+                    </Text>
+                  </View>
+                  <TextInput
+                    style={{
+                      height: 45,
+                      borderWidth: 1,
+                      borderColor: "#e5e7eb",
+                      borderRadius: 8,
+                      paddingHorizontal: 12,
+                      fontSize: 16,
+                    }}
+                    placeholder="Search items..."
+                    value={itemSearchQuery}
+                    onChangeText={setItemSearchQuery}
+                    autoFocus
+                  />
+                </View>
+                <FlatList
+                  data={filteredItems}
+                  keyExtractor={(item) => item._id}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      onPress={() => handleItemSelect(item)}
+                      style={{
+                        padding: 16,
+                        borderBottomWidth: 1,
+                        borderBottomColor: "#f0f0f0",
+                      }}
+                    >
+                      <Text
                         style={{
-                          padding: 12,
-                          borderBottomWidth: index < filteredItems.length - 1 ? 1 : 0,
-                          borderBottomColor: '#f3f4f6',
-                          backgroundColor: 'white',
+                          fontSize: 16,
+                          fontWeight: "500",
+                          color: "#111827",
                         }}
                       >
-                        <Text style={{ fontSize: 16, fontWeight: '500', color: '#111827' }}>
-                          {item.name}
-                        </Text>
-                        <Text style={{ fontSize: 14, color: '#6b7280', marginTop: 2 }}>
-                          ₹{item.pricing.unitPrice} • {item.dimensions.width}x{item.dimensions.height} {item.dimensions.unit}
-                        </Text>
-                        <Text style={{ fontSize: 12, color: '#9ca3af', marginTop: 2 }}>
-                          Available: {item.inventory.availableQuantity}/{item.inventory.totalQuantity}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </View>
-              )}
-            </View>
+                        {item.name}
+                      </Text>
+                      <Text
+                        style={{ fontSize: 14, color: "#6b7280", marginTop: 4 }}
+                      >
+                        ₹{item.pricing.unitPrice} • {item.dimensions.width}x
+                        {item.dimensions.height} {item.dimensions.unit}
+                      </Text>
+                      <Text
+                        style={{ fontSize: 12, color: "#9ca3af", marginTop: 4 }}
+                      >
+                        Available: {item.inventory.availableQuantity}/
+                        {item.inventory.totalQuantity}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  ListEmptyComponent={
+                    <View style={{ padding: 32, alignItems: "center" }}>
+                      <Text style={{ color: "#9ca3af" }}>No items found</Text>
+                    </View>
+                  }
+                />
+              </View>
+            </Modal>
           </View>
           <View className="flex-row gap-4 mb-4">
             <View className="bg-white rounded-xl p-4  flex-1">
@@ -708,6 +774,7 @@ export default function BasicDetails({
               </View>
             </View>
           )}
+
           <TouchableOpacity onPress={handleSubmission}>
             <View className="px-2 py-3 mt-10 bg-black rounded-xl flex flex-row justify-center">
               <Text className="text-white font-bold text-lg">
@@ -717,6 +784,20 @@ export default function BasicDetails({
           </TouchableOpacity>
         </View>
       </View>
-    </ScrollView>
+    </View>
+  );
+
+  return (
+    <FlatList
+      data={[{ key: "form" }]}
+      renderItem={renderForm}
+      keyExtractor={(item) => item.key}
+      contentContainerStyle={{
+        flexGrow: 1,
+        backgroundColor: "#f3f4f6",
+      }}
+      keyboardShouldPersistTaps="always"
+      nestedScrollEnabled
+    />
   );
 }
