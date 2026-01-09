@@ -1,5 +1,5 @@
 import api from "./api";
-export const getRental = async ({customerId, option, limit = 10, page = 1 }) => {
+export const getRental = async ({customerId, option, limit = 10, page = 1, search }) => {
   try {
     const response = await api.get("/rentals", {
       params: {
@@ -7,6 +7,7 @@ export const getRental = async ({customerId, option, limit = 10, page = 1 }) => 
         rentalStatus: option,
         limit,
         page,
+        search: search || undefined,
       },
     });
     // console.log("response getAPI:", response.data);

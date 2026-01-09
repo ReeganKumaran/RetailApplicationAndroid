@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { Box, DollarSign, IndianRupee, Search } from "lucide-react-native";
+import { Box, DollarSign, IndianRupee, Search, X } from "lucide-react-native";
 import {
   ActivityIndicator,
   Dimensions,
@@ -7,11 +7,12 @@ import {
   Pressable,
   ScrollView,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { useCallback,  useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import { getCustomers, getRental } from "../../src/API/getApi";
 import { StatsCardSkeleton, ChartSkeleton } from "../../src/Component/SkeletonLoaders";
@@ -75,12 +76,48 @@ export default function Dashboard() {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchLoading, setSearchLoading] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       loadDashboardData();
     }, [])
   );
+
+  // Debounced search effect
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      if (searchQuery.trim()) {
+        searchRentals(searchQuery);
+      } else {
+        loadDashboardData();
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(delayDebounce);
+  }, [searchQuery]);
+
+  const searchRentals = async (query) => {
+    try {
+      setSearchLoading(true);
+      setError("");
+      const response = await getRental({
+        limit: 50,
+        page: 1,
+        option: "Pending",
+        search: query,
+      });
+      setRental(response?.data?.rentals || []);
+    } catch (error) {
+      console.error("Error searching rentals:", error?.message || error);
+      setError("Unable to search rentals.");
+      setRental([]);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
 
   const loadDashboardData = async () => {
     try {
@@ -162,18 +199,49 @@ export default function Dashboard() {
         <KeyboardAvoidingView className="flex-1" behavior="padding">
           <SafeAreaView className="flex-1">
             {/* Custom Navbar */}
-            <View className="flex-row items-center justify-between px-4 py-4  border-b border-gray-200">
-              <Text className="text-2xl font-bold text-gray-900" style={{ lineHeight: 24 }}>SRK</Text>
-              <Pressable
-                onPress={() => {
-                  // Add your search functionality here
-                  console.log("Search pressed");
-                }}
-                hitSlop={12}
-                className="items-center justify-center"
-              >
-                <Search size={24} color="#000" strokeWidth={2} />
-              </Pressable>
+            <View className="px-4 py-4 border-b border-gray-200">
+              {!searchVisible ? (
+                <View className="flex-row items-center justify-between">
+                  <Text className="text-2xl font-bold text-gray-900" style={{ lineHeight: 24 }}>SRK</Text>
+                  <Pressable
+                    onPress={() => {
+                      setSearchVisible(true);
+                    }}
+                    hitSlop={12}
+                    className="items-center justify-center"
+                  >
+                    <Search size={24} color="#000" strokeWidth={2} />
+                  </Pressable>
+                </View>
+              ) : (
+                <View className="flex-row items-center gap-2">
+                  <View className="flex-1 flex-row items-center bg-gray-100 rounded-full px-4 py-2">
+                    <Search size={20} color="#666" />
+                    <TextInput
+                      className="flex-1 ml-2 text-base"
+                      placeholder="Search by customer, item, or size..."
+                      value={searchQuery}
+                      onChangeText={setSearchQuery}
+                      autoFocus
+                      placeholderTextColor="#999"
+                    />
+                    {searchQuery.length > 0 && (
+                      <Pressable onPress={() => setSearchQuery("")} hitSlop={8}>
+                        <X size={20} color="#666" />
+                      </Pressable>
+                    )}
+                  </View>
+                  <Pressable
+                    onPress={() => {
+                      setSearchVisible(false);
+                      setSearchQuery("");
+                    }}
+                    hitSlop={12}
+                  >
+                    <Text className="text-base font-medium">Cancel</Text>
+                  </Pressable>
+                </View>
+              )}
             </View>
 
             <View style={{ flex: 1 }}>
@@ -231,12 +299,18 @@ export default function Dashboard() {
                     {error.length > 0 && (
                       <Text className="text-red-500 text-center">{error}</Text>
                     )}
-                    {!error && rental.length === 0 && (
+                    {!error && rental.length === 0 && !searchLoading && (
                       <Text className="text-gray-400 text-center">
-                        No rentals available.
+                        {searchQuery.trim() ? `No results found for "${searchQuery}"` : "No rentals available."}
                       </Text>
                     )}
-                    {rental.length > 0 &&
+                    {searchLoading && (
+                      <View className="items-center justify-center py-8">
+                        <ActivityIndicator size="large" color="#000" />
+                        <Text className="text-gray-500 mt-2">Searching...</Text>
+                      </View>
+                    )}
+                    {!searchLoading && rental.length > 0 &&
                       rental.map((item, idx) => (
                         <Pressable
                           key={idx}
