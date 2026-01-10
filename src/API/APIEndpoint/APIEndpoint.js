@@ -1,4 +1,4 @@
-const URLOption = 3; // 1: Deployed, 2: Localhost, 3: LAN IP
+const URLOption = 1; // 1: Deployed, 2: Localhost, 3: LAN IP
 export const baseURL = () => {
   switch (URLOption) {
     case 1:
