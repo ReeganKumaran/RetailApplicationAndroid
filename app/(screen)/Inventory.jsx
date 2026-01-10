@@ -9,6 +9,7 @@ import {
   Text,
   TextInput,
   ToastAndroid,
+  TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
@@ -24,6 +25,7 @@ export default function Inventory() {
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [showUnitPopup, setShowUnitPopup] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     inventory: {
@@ -37,7 +39,7 @@ export default function Inventory() {
     dimensions: {
       width: "",
       height: "",
-      unit: "ft",
+      unit: "",
     },
   });
 
@@ -47,6 +49,12 @@ export default function Inventory() {
     }, [])
   );
 
+  const units = [
+    { unit: "cm", name: "Centimeters" },
+    { unit: "m", name: "Meters" },
+    { unit: "inch", name: "Inches" },
+    { unit: "ft", name: "Feet" },
+  ];
   const loadItems = async () => {
     try {
       setLoading(true);
@@ -133,15 +141,24 @@ export default function Inventory() {
       showToast("Please enter item name");
       return;
     }
-    if (!formData.pricing.unitPrice || parseFloat(formData.pricing.unitPrice) <= 0) {
+    if (
+      !formData.pricing.unitPrice ||
+      parseFloat(formData.pricing.unitPrice) <= 0
+    ) {
       showToast("Please enter valid unit price");
       return;
     }
-    if (!formData.inventory.totalQuantity || parseInt(formData.inventory.totalQuantity) <= 0) {
+    if (
+      !formData.inventory.totalQuantity ||
+      parseInt(formData.inventory.totalQuantity) <= 0
+    ) {
       showToast("Please enter valid total quantity");
       return;
     }
-    if (!formData.inventory.availableQuantity || parseInt(formData.inventory.availableQuantity) < 0) {
+    if (
+      !formData.inventory.availableQuantity ||
+      parseInt(formData.inventory.availableQuantity) < 0
+    ) {
       showToast("Please enter valid available quantity");
       return;
     }
@@ -176,11 +193,16 @@ export default function Inventory() {
       }
 
       if (response.success) {
-        showToast(editingItem ? "Item updated successfully! ✅" : "Item added successfully! ✅");
+        showToast(
+          editingItem
+            ? "Item updated successfully! ✅"
+            : "Item added successfully! ✅"
+        );
         closeModal();
         loadItems(); // Reload the list
       } else {
-        const errorMessage = response.error?.message || response.error || "Failed to save item";
+        const errorMessage =
+          response.error?.message || response.error || "Failed to save item";
         showToast(errorMessage);
       }
     } catch (err) {
@@ -351,11 +373,7 @@ export default function Inventory() {
               <Text className="text-lg font-bold">
                 {editingItem ? "Edit Item" : "Add New Item"}
               </Text>
-              <Pressable
-                onPress={handleSave}
-                disabled={saving}
-                hitSlop={12}
-              >
+              <Pressable onPress={handleSave} disabled={saving} hitSlop={12}>
                 {saving ? (
                   <ActivityIndicator size="small" color="#000" />
                 ) : (
@@ -437,15 +455,28 @@ export default function Inventory() {
                     placeholderTextColor="#999"
                     keyboardType="numeric"
                     value={formData.inventory.availableQuantity}
-                    onChangeText={(text) =>
-                      setFormData({
-                        ...formData,
-                        inventory: {
-                          ...formData.inventory,
-                          availableQuantity: text,
-                        },
-                      })
-                    }
+                    onChangeText={(text) => {
+                      if (
+                        formData.inventory.totalQuantity &&
+                        parseInt(text) >
+                          parseInt(formData.inventory.totalQuantity)
+                      ) {
+                        showToast(
+                          "Available quantity cannot be greater than total quantity"
+                        );
+                      } else {
+                        setFormData({
+                          ...formData,
+                          inventory: {
+                            ...formData.inventory,
+                            availableQuantity: text,
+                          },
+                        });
+                      }
+                    }}
+                    // else {
+
+                    // }
                   />
                 </View>
               </View>
@@ -488,25 +519,48 @@ export default function Inventory() {
                   </View>
                   <View className="flex-1">
                     <Pressable
-                      onPress={() => {
-                        Alert.alert(
-                          "Select Unit",
-                          "",
-                          [
-                            { text: "cm", onPress: () => setFormData({ ...formData, dimensions: { ...formData.dimensions, unit: "cm" } }) },
-                            { text: "m", onPress: () => setFormData({ ...formData, dimensions: { ...formData.dimensions, unit: "m" } }) },
-                            { text: "inch", onPress: () => setFormData({ ...formData, dimensions: { ...formData.dimensions, unit: "inch" } }) },
-                            { text: "ft", onPress: () => setFormData({ ...formData, dimensions: { ...formData.dimensions, unit: "ft" } }) },
-                            { text: "Cancel", style: "cancel" }
-                          ]
-                        );
-                      }}
+                      onPress={() => setShowUnitPopup(true)}
                       className="bg-white border border-gray-200 rounded-lg p-3"
                     >
-                      <Text className={formData.dimensions.unit ? "text-black" : "text-gray-400"}>
-                        {formData.dimensions.unit || "Unit"}
-                      </Text>
+                      <Text>{formData.dimensions.unit || "Select Unit"}</Text>
                     </Pressable>
+                    <Modal
+                      transparent
+                      visible={showUnitPopup}
+                      animationType="fade"
+                      onRequestClose={() => setShowUnitPopup(false)}
+                    >
+                      <View className="flex-1 justify-center items-center bg-black/40">
+                        <View className="bg-white rounded-xl p-4 w-64">
+                          {units.map((item) => (
+                            <TouchableOpacity
+                              key={item.unit}
+                              className="p-3 border-b border-gray-200"
+                              onPress={() => {
+                                setFormData({
+                                  ...formData,
+                                  dimensions: {
+                                    ...formData.dimensions,
+                                    unit: item.unit,
+                                  },
+                                });
+                                setShowUnitPopup(false);
+                              }}
+                            >
+                              <Text className="text-lg text-gray-800">{item.name} ({item.unit})</Text>
+                            </TouchableOpacity>
+                          ))}
+                          <TouchableOpacity
+                            className="p-3"
+                            onPress={() => setShowUnitPopup(false)}
+                          >
+                            <Text className="text-center text-red-500">
+                              Cancel
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    </Modal>
                   </View>
                 </View>
               </View>

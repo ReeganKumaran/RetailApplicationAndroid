@@ -79,7 +79,8 @@ export default function RentalDetails() {
               <Text className="text-white text-lg font-bold mb-2">
                 Customer Information
               </Text>
-              <Pressable onPress={handleEditPress}>
+              <Pressable className="bg-green-600 py-2 px-3 rounded-full flex-row items-center justify-center" onPress={handleEditPress}>
+                <Text className="text-white font-medium mr-2">Edit Rental</Text>
                 <UserPen color="white" size={20} />
               </Pressable>
               {/* <Text className="text-2xl font-bold text-white"> */}
@@ -243,7 +244,7 @@ export default function RentalDetails() {
               <Text className="text-gray-400">{rental.notes}</Text>
             </View>
           )}
-          <View className="bg-gray-950 rounded-lg p-4 mb-4">
+          <View className="bg-gray-950 rounded-lg p-4 mb-8">
             <Text className="text-gray-400">Total Price:</Text>
             <View className="flex-row justify-end">
               <Text className="text-white font-bold text-lg">

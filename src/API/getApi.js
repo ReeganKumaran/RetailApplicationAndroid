@@ -102,12 +102,13 @@ export const previewInvoicePDF = async (rentalIds) => {
     }
 }
 
-export const getItems = async ({ page = 1, limit = null } = {}) => {
+export const getItems = async ({ page = 1, limit = null, id } = {}) => {
     try {
         const response = await api.get("/items", {
             params: {
                 page,
                 limit: limit || undefined,
+                id: id || undefined,
             },
         });
         return response.data;

@@ -1,3 +1,5 @@
+import { router, useFocusEffect } from "expo-router";
+import { ArrowLeft } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
@@ -7,19 +9,16 @@ import {
   Modal,
   Platform,
   Pressable,
-  ScrollView,
   Text,
   TextInput,
   ToastAndroid,
   TouchableOpacity,
   View,
 } from "react-native";
-import { postRental, updateRental } from "../API/postApi";
 import { getItems } from "../API/getApi";
+import { postRental, updateRental } from "../API/postApi";
 import { validateRentalForm } from "../helper/Validation";
 import DatePicker from "./DatePicker";
-import { router, useFocusEffect } from "expo-router";
-import { ArrowLeft, X } from "lucide-react-native";
 export default function BasicDetails({
   customerData,
   rentalData,
@@ -48,6 +47,7 @@ export default function BasicDetails({
         dataSource?.customerDetail?.customerAadhar ||
         "",
       itemDetail: {
+        itemId: dataSource?.itemDetail?.itemId || "",
         name: dataSource?.itemDetail?.name || "",
         size: dataSource?.itemDetail?.size || "",
         price: dataSource?.itemDetail?.price?.toString() || "",
@@ -97,9 +97,37 @@ export default function BasicDetails({
       fetchItems();
     }, [])
   );
+  useFocusEffect(
+    useCallback(() => {
+      if (isEditMode) {
+        const fetchItems = async () => {
+          try {
+            const response = await getItems({
+              id: rentalData?.itemDetail?.itemId,
+            });
+            console.log("response for edit mode item fetch:", response);
+            if (response?.data?.item) {
+              console.log("Fetched item for edit mode:", response.data.item);
+              if (response.data?.item?._id === rentalData?.itemDetail?.itemId) {
+                setTotalAvailableItems(
+                  parseInt(response.data?.item?.inventory.availableQuantity) +
+                    parseInt(initialFormState.itemDetail.quantity)
+                );
+              } else {
+                showToast("Item data mismatch. Please check the item details.");
+              }
+            }
+          } catch (error) {
+            console.error("Error fetching items:", error);
+          }
+        };
+        fetchItems();
+      }
+    }, [isEditMode, rentalData?.itemDetail?.itemId])
+  );
   useEffect(() => {
     console.log("Form Data Updated:", formData);
-  }, [formData]); 
+  }, [formData]);
   // Reset form when data source or edit mode changes
   useEffect(() => {
     setFormData(initialFormState);
@@ -452,7 +480,13 @@ export default function BasicDetails({
                   keyExtractor={(item) => item._id}
                   renderItem={({ item }) => (
                     <TouchableOpacity
-                      onPress={() => handleItemSelect(item)}
+                      onPress={() => {
+                        if(item.inventory.availableQuantity === 0){
+                          showToast("Selected item is out of stock");
+                          return;
+                        }
+                        handleItemSelect(item);
+                      }}
                       style={{
                         padding: 16,
                         borderBottomWidth: 1,
@@ -818,17 +852,5 @@ export default function BasicDetails({
     </View>
   );
 
-  return (
-    <FlatList
-      data={[{ key: "form" }]}
-      renderItem={renderForm}
-      keyExtractor={(item) => item.key}
-      contentContainerStyle={{
-        flexGrow: 1,
-        backgroundColor: "#f3f4f6",
-      }}
-      keyboardShouldPersistTaps="always"
-      nestedScrollEnabled
-    />
-  );
+  return renderForm();
 }
