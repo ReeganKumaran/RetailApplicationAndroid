@@ -9,6 +9,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   Text,
   TextInput,
   ToastAndroid,
@@ -263,7 +264,7 @@ export default function BasicDetails({
   };
 
   const renderForm = () => (
-    <View className="flex-1 bg-gray-50">
+    <ScrollView className="flex-1 bg-gray-50" showsVerticalScrollIndicator={true}>
       <View className="p-4">
         {/* Customer Information Section */}
         <View className="mb-6">
@@ -849,7 +850,7 @@ export default function BasicDetails({
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 
   return renderForm();

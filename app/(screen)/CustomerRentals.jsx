@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { useFocusEffect } from "@react-navigation/native";
-import * as FileSystem from 'expo-file-system/legacy';
+import * as Print from 'expo-print';
 import { router, useLocalSearchParams } from "expo-router";
 import * as Sharing from 'expo-sharing';
 import {
@@ -27,8 +27,7 @@ import {
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { WebView } from 'react-native-webview';
 import { baseURL } from "../../src/API/APIEndpoint/APIEndpoint";
-import { getToken } from "../../src/API/Auth/token";
-import { generateInvoicePDF, getRental, previewInvoicePDF } from "../../src/API/getApi";
+import { getRental, previewInvoicePDF } from "../../src/API/getApi";
 import SegmentedToggle from "../../src/Component/SegmentedToggle";
 import { RentalListSkeleton } from "../../src/Component/SkeletonLoaders";
 import { formatDate, getStatusColor } from "../../src/utils/Formater";
@@ -204,42 +203,6 @@ export default function CustomerRentals() {
     setSelectedRentals([]);
   };
 
-  const blobToDataUrl = (blob) =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onerror = () => reject(new Error("Failed to read PDF"));
-      reader.onloadend = () => resolve(reader.result);
-      reader.readAsDataURL(blob);
-    });
-
-  const createInvoicePdfPayload = async (rentalIds) => {
-    const token = await getToken();
-    if (!token) {
-      throw new Error("Missing auth token. Please log in again.");
-    }
-
-    const result = await generateInvoicePDF(rentalIds, token);
-    if (!result.success) {
-      const message = result.error?.message || result.error || "Failed to generate invoice";
-      throw new Error(message);
-    }
-
-    const dataUrl = await blobToDataUrl(result.data);
-    const base64Data = dataUrl.split(',')[1];
-    if (!base64Data) {
-      throw new Error("Failed to decode invoice file.");
-    }
-
-    const filename = `invoice_${Date.now()}.pdf`;
-    const fileUri = `${FileSystem.cacheDirectory}${filename}`;
-
-    await FileSystem.writeAsStringAsync(fileUri, base64Data, {
-      encoding: 'base64',
-    });
-
-    return { fileUri, filename, base64Data };
-  };
-
   // Generate Invoice Preview (HTML)
   const handleGenerateInvoice = async () => {
     if (selectedRentals.length === 0) {
@@ -272,7 +235,7 @@ export default function CustomerRentals() {
     }
   };
 
-  // Download PDF to device
+  // Download PDF to device using expo-print for proper Tamil font rendering
   const handleDownloadPDF = async () => {
     if (selectedRentals.length === 0) {
       Alert.alert("No Rentals Selected", "Please select at least one rental to download invoice");
@@ -283,58 +246,63 @@ export default function CustomerRentals() {
     try {
       setDownloading(true);
 
+      // Get HTML preview first
+      const result = await previewInvoicePDF(selectedRentals);
+      if (!result.success) {
+        Alert.alert("Error", result.error?.message || "Failed to generate invoice");
+        return;
+      }
+
+      // Generate PDF from HTML using expo-print (properly renders Tamil fonts)
+      const { uri } = await Print.printToFileAsync({
+        html: result.data,
+        base64: false,
+      });
+
+      // Check if react-native-blob-util is available for saving to Downloads
       const turboModule = global?.__turboModuleProxy?.("ReactNativeBlobUtil");
       if (
-        Platform.OS !== "android" ||
-        (!NativeModules.ReactNativeBlobUtil && !NativeModules.RNFetchBlob && !turboModule)
+        Platform.OS === "android" &&
+        (NativeModules.ReactNativeBlobUtil || NativeModules.RNFetchBlob || turboModule)
       ) {
-        Alert.alert(
-          "Download Manager Unavailable",
-          "Native downloads require a development build with react-native-blob-util.\n\nPlease use the Share button instead, or install the package:\n\nnpx expo install react-native-blob-util\nnpx expo prebuild\nnpx expo run:android"
-        );
-        return;
+        let RNBlobUtil;
+        try {
+          const module = require("react-native-blob-util");
+          RNBlobUtil = module?.default ?? module;
+        } catch (loadError) {
+          // Fall back to sharing
+        }
+
+        if (RNBlobUtil?.fs?.dirs?.DownloadDir) {
+          const filename = `invoice_${Date.now()}.pdf`;
+          const downloadPath = `${RNBlobUtil.fs.dirs.DownloadDir}/${filename}`;
+
+          // Copy the generated PDF to Downloads folder
+          await RNBlobUtil.fs.cp(uri, downloadPath);
+
+          // Make it visible in gallery/files
+          if (RNBlobUtil.fs.scanFile) {
+            await RNBlobUtil.fs.scanFile([{ path: downloadPath, mime: 'application/pdf' }]);
+          }
+
+          Alert.alert("Success", `Invoice saved to Downloads as ${filename}`);
+          didDownload = true;
+        }
       }
 
-      let RNBlobUtil;
-      try {
-        const module = require("react-native-blob-util");
-        RNBlobUtil = module?.default ?? module;
-      } catch (loadError) {
-        Alert.alert(
-          "Download Manager Unavailable",
-          "Native downloads require a development build.\n\nPlease use the Share button instead to save the invoice."
-        );
-        return;
+      // If blob util not available, use sharing as fallback
+      if (!didDownload) {
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(uri, {
+            mimeType: 'application/pdf',
+            dialogTitle: 'Save Invoice',
+            UTI: 'com.adobe.pdf'
+          });
+          didDownload = true;
+        } else {
+          Alert.alert("Error", "Unable to save file. Please try Share option.");
+        }
       }
-
-      const token = await getToken();
-      if (!token) {
-        Alert.alert("Error", "Missing auth token. Please log in again.");
-        return;
-      }
-
-      const rentalIdsParam = selectedRentals.join(',');
-      const downloadUrl = `${baseURL()}/generate-invoice-pdf?rentalIds=${encodeURIComponent(rentalIdsParam)}&token=${encodeURIComponent(token)}`;
-      const filename = `invoice_${Date.now()}.pdf`;
-      const downloadDir = RNBlobUtil?.fs?.dirs?.DownloadDir;
-      if (!downloadDir) {
-        Alert.alert("Not Supported", "Download manager is only available on Android.");
-        return;
-      }
-      const downloadPath = `${downloadDir}/${filename}`;
-
-      await RNBlobUtil.config({
-        addAndroidDownloads: {
-          useDownloadManager: true,
-          notification: true,
-          title: filename,
-          description: "Invoice PDF",
-          mime: "application/pdf",
-          path: downloadPath,
-          mediaScannable: true,
-        },
-      }).fetch("GET", downloadUrl);
-      didDownload = true;
     } catch (error) {
       console.error("Download error:", error);
       Alert.alert("Error", "Failed to download invoice: " + (error?.message || error));
@@ -350,7 +318,7 @@ export default function CustomerRentals() {
     }
   };
 
-  // Share PDF
+  // Share PDF using expo-print for proper Tamil font rendering
   const handleSharePDF = async () => {
     if (selectedRentals.length === 0) {
       Alert.alert("No Rentals Selected", "Please select at least one rental to share invoice");
@@ -361,9 +329,21 @@ export default function CustomerRentals() {
     try {
       setSharing(true);
 
+      // Get HTML preview first
+      const result = await previewInvoicePDF(selectedRentals);
+      if (!result.success) {
+        Alert.alert("Error", result.error?.message || "Failed to generate invoice");
+        return;
+      }
+
+      // Generate PDF from HTML using expo-print (properly renders Tamil fonts)
+      const { uri } = await Print.printToFileAsync({
+        html: result.data,
+        base64: false,
+      });
+
       if (await Sharing.isAvailableAsync()) {
-        const { fileUri } = await createInvoicePdfPayload(selectedRentals);
-        await Sharing.shareAsync(fileUri, {
+        await Sharing.shareAsync(uri, {
           mimeType: 'application/pdf',
           dialogTitle: 'Share Invoice',
           UTI: 'com.adobe.pdf'
