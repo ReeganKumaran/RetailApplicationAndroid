@@ -42,3 +42,7 @@ nul
 .claude*
 accept_licenses.bat
 *.md*
+
+# API Build
+
+/APK_Build
