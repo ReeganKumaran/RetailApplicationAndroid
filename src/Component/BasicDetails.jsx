@@ -186,6 +186,9 @@ export default function BasicDetails({
       formData,
       showDeliveryAddress
     );
+    if (!isValid) {
+      console.log("Validation errors:", newErrors);
+    }
     setErrors(newErrors);
     return isValid;
   };

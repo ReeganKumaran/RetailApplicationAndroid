@@ -87,8 +87,9 @@ export const validateRentalForm = (formData, showDeliveryAddress) => {
         isValid = false;
     }
 
-    // Advance amount: optional, but if provided must be valid
-    if (formData.itemDetail.advanceAmount && !validatePositiveNumber(formData.itemDetail.advanceAmount)) {
+    // Advance amount: optional, but if provided must be valid (0 is acceptable)
+    const advAmt = formData.itemDetail.advanceAmount;
+    if (advAmt !== null && advAmt !== undefined && String(advAmt).trim() !== "" && String(advAmt).trim() !== "0" && !validatePositiveNumber(advAmt)) {
         errors.advanceAmount = 'Enter a valid advance amount';
         isValid = false;
     }

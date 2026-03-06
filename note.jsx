@@ -149,5 +149,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   muted: { color: "#6B7280", textAlign: "center" },
-  link: { color: "#000000ff", textAlign: "center", fontWeight: "700", marginTop: 4 },
+  link: {
+    color: "#000000ff",
+    textAlign: "center",
+    fontWeight: "700",
+    marginTop: 4,
+  },
 });
