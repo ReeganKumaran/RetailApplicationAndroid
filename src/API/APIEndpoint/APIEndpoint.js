@@ -2,7 +2,7 @@ const URLOption = 1; // 1: Deployed, 2: Localhost, 3: LAN IP
 export const baseURL = () => {
   switch (URLOption) {
     case 1:
-      return "https://retailapplication-30d9.onrender.com";
+      return "https://srk.reeganlabs.com";
     case 2:
       return "http://localhost:5000"; // not in working condition
     default:
